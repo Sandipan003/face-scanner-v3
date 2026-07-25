@@ -421,10 +421,13 @@ export const ProphecyOrb3d: React.FC<ProphecyOrb3dProps> = ({ onScanClick }) => 
         />
 
         {/* UI Overlays */}
-        <div className="absolute top-4 left-4 z-20 flex items-center gap-2 bg-black/60 backdrop-blur-md px-4 py-2 rounded-full border border-amber-500/20 text-xs text-amber-200 pointer-events-none font-sans">
+        <button 
+          onClick={onScanClick}
+          className="absolute top-4 left-4 z-20 flex items-center gap-2 bg-black/60 hover:bg-black/80 transition-colors backdrop-blur-md px-4 py-2 rounded-full border border-amber-500/20 text-xs text-amber-200 font-sans cursor-pointer shadow-[0_0_10px_rgba(245,158,11,0.1)] hover:shadow-[0_0_15px_rgba(245,158,11,0.3)] hover:scale-105 transform duration-200"
+        >
           <Wand2 className="w-4 h-4 text-amber-400" />
           <span className="tracking-widest uppercase">Gaze into the Orb</span>
-        </div>
+        </button>
 
         <div className="absolute top-4 right-4 z-20 flex items-center gap-2 bg-black/80 backdrop-blur-md px-4 py-2 rounded-full border border-amber-500/30 text-xs font-mono text-amber-400">
           <Sparkles className="w-4 h-4 animate-pulse" />
