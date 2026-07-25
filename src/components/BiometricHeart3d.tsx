@@ -239,7 +239,7 @@ export const BiometricHeart3d: React.FC<BiometricHeart3dProps> = ({
     window.addEventListener("resize", handleResize);
 
     // 10. Animation Loop
-    let clock = new THREE.Clock();
+    const startTime = performance.now();
     let pulseScale = 1;
     let ringScale = 1;
     let ringOpacity = 0;
@@ -249,7 +249,7 @@ export const BiometricHeart3d: React.FC<BiometricHeart3dProps> = ({
     const animate = () => {
       animId = requestAnimationFrame(animate);
 
-      const elapsedTime = clock.getElapsedTime();
+      const elapsedTime = (performance.now() - startTime) / 1000;
       
       // Calculate pulsation based on current BPM state
       const pulseSpeed = (bpm / 60) * Math.PI * 2;

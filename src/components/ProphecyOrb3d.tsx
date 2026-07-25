@@ -162,12 +162,12 @@ export const ProphecyOrb3d: React.FC<ProphecyOrbProps> = ({ onScanClick }) => {
     window.addEventListener("resize", handleResize);
 
     // Animation Loop
-    const clock = new THREE.Clock();
-    let animId: number;
+    const startTime = performance.now();
+    let animationId: number;
 
     const animate = () => {
-      animId = requestAnimationFrame(animate);
-      const elapsedTime = clock.getElapsedTime();
+      animationId = requestAnimationFrame(animate);
+      const elapsedTime = (performance.now() - startTime) / 1000;
 
       // Rotate Orb and Particles
       orbGroup.rotation.y += (targetRotationY - orbGroup.rotation.y) * 0.1;
@@ -186,7 +186,7 @@ export const ProphecyOrb3d: React.FC<ProphecyOrbProps> = ({ onScanClick }) => {
     animate();
 
     return () => {
-      cancelAnimationFrame(animId);
+      cancelAnimationFrame(animationId);
       window.removeEventListener("resize", handleResize);
       domElem.removeEventListener("mousedown", onPointerDown);
       window.removeEventListener("mousemove", onPointerMove);
