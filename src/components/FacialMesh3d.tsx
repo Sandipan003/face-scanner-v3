@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
-import { Camera, Eye, Zap, RotateCcw, Scan, ShieldCheck, Activity } from "lucide-react";
+import { Camera, Eye, Zap, RotateCcw, Scan, ShieldCheck, Activity, User } from "lucide-react";
 
 interface FacialMesh3dProps {
   onScanClick?: () => void;
@@ -8,7 +8,7 @@ interface FacialMesh3dProps {
 
 export const FacialMesh3d: React.FC<FacialMesh3dProps> = ({ onScanClick }) => {
   const mountRef = useRef<HTMLDivElement | null>(null);
-  const [activeMode, setActiveMode] = useState<"wireframe" | "rppg" | "nodes">("wireframe");
+  const [activeMode, setActiveMode] = useState<"human" | "wireframe" | "landmarks">("human");
   const [scanBeamY, setScanBeamY] = useState<number>(0);
   const pulseCanvasRef = useRef<HTMLCanvasElement | null>(null);
 
@@ -23,7 +23,7 @@ export const FacialMesh3d: React.FC<FacialMesh3dProps> = ({ onScanClick }) => {
     const scene = new THREE.Scene();
     
     // 2. Camera setup
-    const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
+    const camera = new THREE.PerspectiveCamera(42, width / height, 0.1, 1000);
     camera.position.set(0, 0, 14);
 
     // 3. Renderer setup
@@ -31,111 +31,184 @@ export const FacialMesh3d: React.FC<FacialMesh3dProps> = ({ onScanClick }) => {
     renderer.setSize(width, height);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.2;
+    renderer.toneMappingExposure = 1.25;
     container.appendChild(renderer.domElement);
 
-    // 4. Create 3D Parametric Facial Head Model
-    const createHeadGeometry = () => {
-      // Create an anatomical head shape using Lathe + Deformation
-      const points: THREE.Vector2[] = [];
-      for (let i = 0; i <= 24; i++) {
-        const t = i / 24;
-        const angle = t * Math.PI;
-        // Head profile curve (broader top for skull, narrower chin at bottom)
-        let r = Math.sin(angle) * 3.4;
-        if (t > 0.6) r *= (1 - (t - 0.6) * 0.7); // Taper chin
-        if (t < 0.25) r *= (0.8 + t); // Crown curve
-        const y = (0.5 - t) * 7.5;
-        points.push(new THREE.Vector2(r, y));
-      }
+    // 4. Construct Sculpted 3D Human Face Geometry
+    const createSculptedHumanHeadGeometry = () => {
+      const geom = new THREE.SphereGeometry(3.6, 64, 64);
+      const pos = geom.attributes.position;
 
-      const latheGeom = new THREE.LatheGeometry(points, 36);
-
-      // Deform sphere/lathe to sculpt face features (eyes, nose, cheeks, jaw)
-      const pos = latheGeom.attributes.position;
       for (let i = 0; i < pos.count; i++) {
         let x = pos.getX(i);
         let y = pos.getY(i);
         let z = pos.getZ(i);
 
-        // Flatten back of head slightly, protrude front face (z > 0)
-        if (z > 0) {
-          z *= 1.35; // Pronounce face front
+        const distFromCenter = Math.sqrt(x * x + y * y + z * z);
+        const isFront = z > 0;
+
+        if (isFront) {
+          // --- FRONT FACIAL SCULPTING ---
           
-          // Nose bridge protrusion (y around 0.5 to 1.5, center x)
-          if (Math.abs(x) < 1.0 && y > 0.2 && y < 1.8) {
-            z += (1.0 - Math.abs(x)) * 0.9 * Math.sin((y - 0.2) / 1.6 * Math.PI);
-          }
-
-          // Eye sockets indentation (y around 1.2 to 2.2, x around 1.2)
-          if (Math.abs(x) > 0.8 && Math.abs(x) < 2.2 && y > 1.0 && y < 2.4) {
-            z -= 0.5 * (1 - Math.abs(Math.abs(x) - 1.5) / 0.7);
-          }
-
-          // Cheekbones (y around 0.0 to 0.8, x around 2.0)
-          if (Math.abs(x) > 1.5 && y > -0.5 && y < 0.8) {
-            z += 0.4;
-          }
-
-          // Mouth & Jaw structure (y < -0.8)
+          // 1. Overall Face Oval Proportions
+          // Taper lower face toward jawline/chin
           if (y < -0.5) {
-            x *= 0.85; // Taper jawline
+            const jawFactor = 1 - 0.35 * Math.min(1, (-0.5 - y) / 3.0);
+            x *= jawFactor;
           }
+
+          // 2. Forehead Roundness (y > 1.5)
+          if (y > 1.5) {
+            z += 0.2 * Math.sin(((y - 1.5) / 2.0) * Math.PI);
+          }
+
+          // 3. Eyebrow Ridges (y ~ 1.2 to 1.8)
+          const browDist = Math.abs(y - 1.4);
+          if (browDist < 0.4 && Math.abs(x) < 2.2) {
+            z += 0.35 * (1 - browDist / 0.4) * (1 - Math.abs(x) / 2.4);
+          }
+
+          // 4. Eye Orbits (Sockets) (around x = ±1.3, y = 0.9)
+          const leftEyeDist = Math.sqrt(Math.pow(x + 1.25, 2) + Math.pow(y - 0.9, 2));
+          const rightEyeDist = Math.sqrt(Math.pow(x - 1.25, 2) + Math.pow(y - 0.9, 2));
+          const minEyeDist = Math.min(leftEyeDist, rightEyeDist);
+
+          if (minEyeDist < 0.85) {
+            z -= 0.65 * (1 - minEyeDist / 0.85);
+          }
+
+          // 5. Nose Bridge & Nose Tip (y from -0.4 to 1.2, x around center)
+          if (y > -0.4 && y < 1.2 && Math.abs(x) < 0.85) {
+            const noseHeight = (y + 0.4) / 1.6; // 0 to 1
+            const noseWidthFactor = 1 - Math.abs(x) / 0.85;
+            
+            // Nose Bridge
+            z += 0.8 * Math.sin(noseHeight * Math.PI) * noseWidthFactor;
+
+            // Nose Tip Prominence (y ~ 0.0)
+            const tipDist = Math.sqrt(Math.pow(x, 2) + Math.pow(y - 0.05, 2));
+            if (tipDist < 0.55) {
+              z += 0.55 * (1 - tipDist / 0.55);
+            }
+          }
+
+          // 6. Cheekbones (Zygomatic Arch) (y ~ 0.0 to 0.7, x ~ ±1.8)
+          const leftCheekDist = Math.sqrt(Math.pow(x + 1.8, 2) + Math.pow(y - 0.3, 2));
+          const rightCheekDist = Math.sqrt(Math.pow(x - 1.8, 2) + Math.pow(y - 0.3, 2));
+          const minCheekDist = Math.min(leftCheekDist, rightCheekDist);
+
+          if (minCheekDist < 1.1) {
+            z += 0.4 * (1 - minCheekDist / 1.1);
+          }
+
+          // 7. Lips & Mouth Protrusion (y ~ -0.9, x < 1.1)
+          const mouthDist = Math.sqrt(Math.pow(x, 2) + Math.pow(y + 0.9, 2));
+          if (mouthDist < 1.2) {
+            // Upper and lower lip curves
+            const lipVal = Math.sin((1 - mouthDist / 1.2) * Math.PI);
+            z += 0.45 * lipVal;
+
+            // Indent mouth seam
+            if (Math.abs(y + 0.9) < 0.12 && Math.abs(x) < 0.8) {
+              z -= 0.2;
+            }
+          }
+
+          // 8. Chin Projection (y ~ -2.7)
+          const chinDist = Math.sqrt(Math.pow(x, 2) + Math.pow(y + 2.7, 2));
+          if (chinDist < 0.8) {
+            z += 0.45 * (1 - chinDist / 0.8);
+          }
+
         } else {
-          z *= 0.85; // Flatter back of skull
+          // --- BACK OF SKULL ---
+          z *= 0.88; // Slightly flatter back of skull
+          if (y < -1.0) x *= 0.85; // Neck junction
         }
 
         pos.setXYZ(i, x, y, z);
       }
 
-      latheGeom.computeVertexNormals();
-      return latheGeom;
+      geom.computeVertexNormals();
+      return geom;
     };
 
-    const headGeometry = createHeadGeometry();
+    const headGeometry = createSculptedHumanHeadGeometry();
 
     // 5. Materials
     const cyanColor = new THREE.Color(0x38bdf8);
     const roseColor = new THREE.Color(0xf43f5e);
-    const indigoColor = new THREE.Color(0x818cf8);
 
-    // Solid Cybernetic Face Material
-    const headMaterial = new THREE.MeshPhysicalMaterial({
-      color: activeMode === "rppg" ? 0x0369a1 : 0x0f172a,
-      emissive: activeMode === "rppg" ? 0x0284c7 : 0x1e1b4b,
-      emissiveIntensity: activeMode === "rppg" ? 0.8 : 0.4,
-      roughness: 0.15,
-      metalness: 0.85,
-      clearcoat: 1.0,
-      clearcoatRoughness: 0.1,
+    // Realistic Cybernetic Human Skin Shader Material
+    const humanHeadMaterial = new THREE.MeshPhysicalMaterial({
+      color: activeMode === "landmarks" ? 0x090d16 : 0x1e293b,
+      emissive: activeMode === "landmarks" ? 0x0284c7 : 0x0f172a,
+      emissiveIntensity: activeMode === "landmarks" ? 0.7 : 0.25,
+      roughness: 0.35,
+      metalness: 0.65,
+      clearcoat: 0.8,
+      clearcoatRoughness: 0.2,
+      wireframe: activeMode === "wireframe",
       transparent: true,
-      opacity: 0.92
+      opacity: 0.94
     });
 
-    // Wireframe Mesh Shell
-    const wireframeMaterial = new THREE.MeshBasicMaterial({
-      color: activeMode === "rppg" ? 0x38bdf8 : 0x818cf8,
+    const headMesh = new THREE.Mesh(headGeometry, humanHeadMaterial);
+
+    // Anatomical Wireframe Overlay
+    const wireframeMat = new THREE.MeshBasicMaterial({
+      color: 0x38bdf8,
       wireframe: true,
       transparent: true,
-      opacity: activeMode === "wireframe" ? 0.6 : 0.25
+      opacity: activeMode === "wireframe" ? 0.65 : 0.18
     });
-
-    const headMesh = new THREE.Mesh(headGeometry, headMaterial);
-    const headWireframe = new THREE.Mesh(headGeometry, wireframeMaterial);
-    headWireframe.scale.set(1.02, 1.02, 1.02);
+    const headWireframe = new THREE.Mesh(headGeometry, wireframeMat);
+    headWireframe.scale.set(1.015, 1.015, 1.015);
 
     const headGroup = new THREE.Group();
     headGroup.add(headMesh);
     headGroup.add(headWireframe);
     scene.add(headGroup);
 
-    // 6. 68-Point Facial Biometric Landmark Nodes
+    // 6. 3D Eyeballs with Glowing Pupils
+    const createEyeball = (x: number, y: number, z: number) => {
+      const eyeGroup = new THREE.Group();
+      eyeGroup.position.set(x, y, z);
+
+      // Sclera (White/Cyber sphere)
+      const scleraGeom = new THREE.SphereGeometry(0.42, 24, 24);
+      const scleraMat = new THREE.MeshStandardMaterial({
+        color: 0xe2e8f0,
+        roughness: 0.1,
+        metalness: 0.9
+      });
+      const scleraMesh = new THREE.Mesh(scleraGeom, scleraMat);
+      eyeGroup.add(scleraMesh);
+
+      // Iris & Pupil (Glowing Cyan)
+      const pupilGeom = new THREE.SphereGeometry(0.22, 16, 16);
+      const pupilMat = new THREE.MeshBasicMaterial({
+        color: 0x38bdf8,
+        wireframe: true
+      });
+      const pupilMesh = new THREE.Mesh(pupilGeom, pupilMat);
+      pupilMesh.position.z = 0.26;
+      eyeGroup.add(pupilMesh);
+
+      return eyeGroup;
+    };
+
+    const leftEye = createEyeball(-1.25, 0.9, 2.7);
+    const rightEye = createEyeball(1.25, 0.9, 2.7);
+    headGroup.add(leftEye);
+    headGroup.add(rightEye);
+
+    // 7. 68-Point Anatomical Facial Landmark Nodes
     const landmarkCount = 68;
     const landmarkGeom = new THREE.BufferGeometry();
     const landmarkPositions = new Float32Array(landmarkCount * 3);
     const landmarkColors = new Float32Array(landmarkCount * 3);
 
-    // Generate realistic 68 facial landmark positions around eyebrows, eyes, nose, mouth, jaw
     let idx = 0;
     const addPt = (x: number, y: number, z: number, isVascular = false) => {
       if (idx < landmarkCount) {
@@ -151,30 +224,30 @@ export const FacialMesh3d: React.FC<FacialMesh3dProps> = ({ onScanClick }) => {
       }
     };
 
-    // Jawline points (-8 to +8)
-    for (let i = -8; i <= 8; i++) addPt(i * 0.32, -1.8 - (8 - Math.abs(i)) * 0.12, 2.2 - Math.abs(i) * 0.15);
+    // Jawline contours (-8 to +8)
+    for (let i = -8; i <= 8; i++) addPt(i * 0.32, -1.8 - (8 - Math.abs(i)) * 0.12, 2.4 - Math.abs(i) * 0.15);
     // Eyebrows
     for (let i = -4; i <= 4; i++) {
-      if (i !== 0) addPt(i * 0.45, 1.9 + Math.cos(i) * 0.1, 2.8);
+      if (i !== 0) addPt(i * 0.42, 1.6 + Math.cos(i) * 0.08, 3.2);
     }
     // Nose bridge & tip
-    for (let i = 0; i <= 4; i++) addPt(0, 1.6 - i * 0.35, 3.1 + (i === 4 ? 0.3 : i * 0.1), true); // rPPG node
-    // Eyes (left & right)
-    addPt(-1.4, 1.4, 2.7); addPt(-1.1, 1.5, 2.7); addPt(-0.8, 1.4, 2.7);
-    addPt(1.4, 1.4, 2.7);  addPt(1.1, 1.5, 2.7);  addPt(0.8, 1.4, 2.7);
+    for (let i = 0; i <= 4; i++) addPt(0, 1.2 - i * 0.3, 3.2 + (i === 4 ? 0.4 : i * 0.1), true); // rPPG node
+    // Eyes (left & right corners)
+    addPt(-1.5, 0.9, 2.9); addPt(-1.25, 1.0, 2.95); addPt(-1.0, 0.9, 2.9);
+    addPt(1.5, 0.9, 2.9);  addPt(1.25, 1.0, 2.95);  addPt(1.0, 0.9, 2.9);
     // Cheek rPPG Vascular Zones
-    addPt(-1.8, 0.4, 2.7, true); addPt(-1.4, 0.2, 2.8, true);
-    addPt(1.8, 0.4, 2.7, true);  addPt(1.4, 0.2, 2.8, true);
+    addPt(-1.7, 0.2, 3.0, true); addPt(-1.3, 0.0, 3.1, true);
+    addPt(1.7, 0.2, 3.0, true);  addPt(1.3, 0.0, 3.1, true);
     // Forehead rPPG Zone
-    addPt(-0.8, 2.6, 2.6, true); addPt(0, 2.7, 2.7, true); addPt(0.8, 2.6, 2.6, true);
+    addPt(-0.8, 2.4, 3.0, true); addPt(0, 2.5, 3.1, true); addPt(0.8, 2.4, 3.0, true);
     // Lips
-    for (let i = -3; i <= 3; i++) addPt(i * 0.28, -0.9 - Math.abs(i) * 0.05, 2.8);
+    for (let i = -3; i <= 3; i++) addPt(i * 0.26, -0.9 - Math.abs(i) * 0.04, 3.2);
 
     landmarkGeom.setAttribute("position", new THREE.BufferAttribute(landmarkPositions, 3));
     landmarkGeom.setAttribute("color", new THREE.BufferAttribute(landmarkColors, 3));
 
     const landmarkMat = new THREE.PointsMaterial({
-      size: 0.32,
+      size: 0.35,
       vertexColors: true,
       transparent: true,
       opacity: 0.95,
@@ -184,8 +257,8 @@ export const FacialMesh3d: React.FC<FacialMesh3dProps> = ({ onScanClick }) => {
     const landmarkSystem = new THREE.Points(landmarkGeom, landmarkMat);
     headGroup.add(landmarkSystem);
 
-    // 7. Scanning Laser Beam Line & Plane
-    const beamGeom = new THREE.PlaneGeometry(8, 0.12);
+    // 8. Scanning Laser Beam Line
+    const beamGeom = new THREE.PlaneGeometry(8.5, 0.14);
     const beamMat = new THREE.MeshBasicMaterial({
       color: 0x38bdf8,
       side: THREE.DoubleSide,
@@ -194,22 +267,22 @@ export const FacialMesh3d: React.FC<FacialMesh3dProps> = ({ onScanClick }) => {
       blending: THREE.AdditiveBlending
     });
     const scanBeam = new THREE.Mesh(beamGeom, beamMat);
-    scanBeam.position.z = 3.2;
+    scanBeam.position.z = 3.6;
     scene.add(scanBeam);
 
-    // 8. Lighting Setup
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+    // 9. Lighting Setup
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.75);
     scene.add(ambientLight);
 
-    const cyanPointLight = new THREE.PointLight(0x38bdf8, 4, 30);
+    const cyanPointLight = new THREE.PointLight(0x38bdf8, 4.5, 30);
     cyanPointLight.position.set(6, 6, 10);
     scene.add(cyanPointLight);
 
-    const rosePointLight = new THREE.PointLight(0xf43f5e, 3, 30);
+    const rosePointLight = new THREE.PointLight(0xf43f5e, 3.5, 30);
     rosePointLight.position.set(-6, -4, -6);
     scene.add(rosePointLight);
 
-    // 9. Interactive Drag & Cursor Eye-Tracking
+    // 10. Interactive Drag & Eye Gaze Tracking
     let isDragging = false;
     let previousMousePosition = { x: 0, y: 0 };
     let targetRotationX = 0;
@@ -239,8 +312,8 @@ export const FacialMesh3d: React.FC<FacialMesh3dProps> = ({ onScanClick }) => {
 
         previousMousePosition = { x: clientX, y: clientY };
       } else {
-        // Subtle eye/head gaze tracking towards cursor
-        targetRotationY = normX * 0.35;
+        // Smooth gaze tracking towards mouse cursor
+        targetRotationY = normX * 0.4;
         targetRotationX = -normY * 0.25;
       }
 
@@ -271,7 +344,7 @@ export const FacialMesh3d: React.FC<FacialMesh3dProps> = ({ onScanClick }) => {
     };
     window.addEventListener("resize", handleResize);
 
-    // 10. Animation Loop
+    // 11. Animation Loop
     const clock = new THREE.Clock();
     let animId: number;
 
@@ -289,8 +362,8 @@ export const FacialMesh3d: React.FC<FacialMesh3dProps> = ({ onScanClick }) => {
       setScanBeamY(Math.round(((beamY + 3.5) / 7) * 100));
 
       // Pulse landmark size/opacity for rPPG vascular nodes
-      if (activeMode === "nodes") {
-        landmarkMat.size = 0.38 + Math.sin(elapsedTime * 6) * 0.08;
+      if (activeMode === "landmarks") {
+        landmarkMat.size = 0.4 + Math.sin(elapsedTime * 6) * 0.08;
       }
 
       // Rotate landmark system slightly for 3D depth effect
@@ -316,7 +389,7 @@ export const FacialMesh3d: React.FC<FacialMesh3dProps> = ({ onScanClick }) => {
     };
   }, [activeMode]);
 
-  // 11. Pulse Wave Canvas Render Loop
+  // 12. Pulse Wave Canvas Render Loop
   useEffect(() => {
     const canvas = pulseCanvasRef.current;
     if (!canvas) return;
@@ -380,39 +453,40 @@ export const FacialMesh3d: React.FC<FacialMesh3dProps> = ({ onScanClick }) => {
               <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-cyan-500"></span>
             </span>
             <span className="text-[10px] font-mono font-bold tracking-widest uppercase text-cyan-400">
-              Interactive 3D Facial Mesh Engine
+              3D Human Facial Telemetry Engine
             </span>
           </div>
           <h2 className="text-2xl font-extrabold text-white mt-1 flex items-center gap-2">
-            <span>Optical rPPG Facial Telemetry</span>
+            <User className="w-6 h-6 text-cyan-400" />
+            <span>Interactive 3D Human Face</span>
           </h2>
         </div>
 
         {/* View Mode Toggle Controls */}
         <div className="flex items-center gap-1.5 bg-neutral-900/80 p-1.5 rounded-2xl border border-white/10 backdrop-blur-md">
           <button
+            onClick={() => setActiveMode("human")}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+              activeMode === "human" ? "bg-cyan-500 text-white shadow-lg shadow-cyan-500/30" : "text-neutral-400 hover:text-white"
+            }`}
+          >
+            Human Face
+          </button>
+          <button
             onClick={() => setActiveMode("wireframe")}
             className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
               activeMode === "wireframe" ? "bg-cyan-500 text-white shadow-lg shadow-cyan-500/30" : "text-neutral-400 hover:text-white"
             }`}
           >
-            3D Wireframe
+            Cyber Wireframe
           </button>
           <button
-            onClick={() => setActiveMode("rppg")}
+            onClick={() => setActiveMode("landmarks")}
             className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
-              activeMode === "rppg" ? "bg-cyan-500 text-white shadow-lg shadow-cyan-500/30" : "text-neutral-400 hover:text-white"
+              activeMode === "landmarks" ? "bg-cyan-500 text-white shadow-lg shadow-cyan-500/30" : "text-neutral-400 hover:text-white"
             }`}
           >
-            Thermal rPPG
-          </button>
-          <button
-            onClick={() => setActiveMode("nodes")}
-            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
-              activeMode === "nodes" ? "bg-cyan-500 text-white shadow-lg shadow-cyan-500/30" : "text-neutral-400 hover:text-white"
-            }`}
-          >
-            68-Landmarks
+            68 Landmarks
           </button>
         </div>
       </div>
@@ -420,18 +494,18 @@ export const FacialMesh3d: React.FC<FacialMesh3dProps> = ({ onScanClick }) => {
       {/* 3D WebGL Canvas Rendering Viewport */}
       <div 
         ref={mountRef} 
-        className="w-full h-[320px] sm:h-[380px] cursor-grab active:cursor-grabbing relative flex items-center justify-center rounded-2xl bg-gradient-to-b from-neutral-900/40 to-black/80 border border-white/5"
+        className="w-full h-[340px] sm:h-[400px] cursor-grab active:cursor-grabbing relative flex items-center justify-center rounded-2xl bg-gradient-to-b from-neutral-900/50 to-black/90 border border-white/5"
       >
         {/* Floating Hint */}
         <div className="absolute top-4 left-4 z-20 flex items-center gap-2 bg-neutral-900/80 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10 text-[11px] text-neutral-300 pointer-events-none">
           <RotateCcw className="w-3.5 h-3.5 text-cyan-400 animate-spin" style={{ animationDuration: '6s' }} />
-          <span>Move Mouse / Drag to Rotate Facial Mesh</span>
+          <span>Move Mouse / Drag to Rotate 3D Human Face</span>
         </div>
 
         {/* Laser Sweep Status Badge */}
         <div className="absolute top-4 right-4 z-20 flex items-center gap-2 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-full border border-cyan-500/30 text-xs font-mono text-cyan-400">
           <Scan className="w-3.5 h-3.5 animate-pulse" />
-          <span>Scan Sweep: {scanBeamY}%</span>
+          <span>Face Sweep: {scanBeamY}%</span>
         </div>
 
         {/* Floating Biometric ROI Boxes */}
