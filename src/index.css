@@ -1,0 +1,104 @@
+@import "tailwindcss";
+
+@theme {
+  --font-serif: "Playfair Display", Georgia, serif;
+  --font-sans: "Plus Jakarta Sans", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+}
+
+body {
+  background-color: #050505;
+  color: #ffffff;
+  font-family: var(--font-sans);
+}
+
+/* Glassmorphism utility enhancements */
+.glass-panel {
+  background-color: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.glass-card {
+  background-color: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Jitter / Heartbeat Glitch Animations */
+@keyframes jitter {
+  0% { transform: translate(0, 0) rotate(0deg); }
+  15% { transform: translate(-1.5px, 1px) rotate(-0.5deg); }
+  30% { transform: translate(1.5px, -1px) rotate(0.5deg); }
+  45% { transform: translate(-1px, -1.5px) rotate(-0.2deg); }
+  60% { transform: translate(1px, 1px) rotate(0.3deg); }
+  75% { transform: translate(-0.5px, 1.5px) rotate(-0.4deg); }
+  90% { transform: translate(1px, -0.5px) rotate(0.2deg); }
+  100% { transform: translate(0, 0) rotate(0deg); }
+}
+
+@keyframes jitter-fast {
+  0% { transform: translate(0, 0); }
+  20% { transform: translate(-2px, 2px); filter: hue-rotate(15deg); }
+  40% { transform: translate(2px, -1px); filter: hue-rotate(-15deg); }
+  60% { transform: translate(-1px, -2px); }
+  80% { transform: translate(2px, 1px); }
+  100% { transform: translate(0, 0); }
+}
+
+@keyframes heartbeat-pulse {
+  0% { transform: scale(1); opacity: 0.8; }
+  14% { transform: scale(1.18); opacity: 1; filter: drop-shadow(0 0 12px rgba(99, 102, 241, 0.8)); }
+  28% { transform: scale(1); opacity: 0.8; }
+  42% { transform: scale(1.12); opacity: 0.95; filter: drop-shadow(0 0 8px rgba(168, 85, 247, 0.6)); }
+  70% { transform: scale(1); opacity: 0.8; }
+  100% { transform: scale(1); opacity: 0.8; }
+}
+
+@keyframes ecg-sweep {
+  0% { stroke-dashoffset: 1000; }
+  100% { stroke-dashoffset: 0; }
+}
+
+@keyframes float-dna {
+  0% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-15px) rotate(180deg); }
+  100% { transform: translateY(0px) rotate(360deg); }
+}
+
+@keyframes scanline {
+  0% { transform: translateY(-100%); opacity: 0; }
+  50% { opacity: 0.6; }
+  100% { transform: translateY(1000%); opacity: 0; }
+}
+
+@keyframes grid-glow {
+  0%, 100% { opacity: 0.15; }
+  50% { opacity: 0.35; }
+}
+
+.animate-jitter {
+  animation: jitter 2.5s infinite ease-in-out;
+}
+
+.animate-jitter-fast {
+  animation: jitter-fast 0.8s infinite ease-in-out;
+}
+
+.animate-heartbeat {
+  animation: heartbeat-pulse 2s infinite cubic-bezier(0.215, 0.61, 0.355, 1);
+}
+
+.animate-dna {
+  animation: float-dna 20s linear infinite;
+}
+
+.animate-scanline {
+  animation: scanline 8s linear infinite;
+}
+
+.animate-grid-glow {
+  animation: grid-glow 4s ease-in-out infinite;
+}
+
+

@@ -1,0 +1,6 @@
+{
+  "name": "GuardianOS AI - Health Intelligence Platform",
+  "description": "AI-native Personal Health Intelligence Platform featuring medical report OCR, explainable RAG insights, longitudinal health timeline, emergency QR passport, and doctor consultation summaries.",
+  "requestFramePermissions": ["camera", "microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
