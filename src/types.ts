@@ -4,6 +4,7 @@ export interface User {
   email: string;
   age: number;
   avatar: string;
+  role: 'patient' | 'doctor';
 }
 
 export interface ScannerResult {

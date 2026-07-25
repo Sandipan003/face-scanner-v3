@@ -25,7 +25,7 @@ export const Navbar: React.FC<NavbarProps> = ({ user, onLoginClick, onLogout }) 
             <div className="flex items-center gap-4">
               <div className="hidden sm:flex flex-col items-end">
                 <span className="text-sm font-bold text-white">{user.name}</span>
-                <span className="text-[10px] font-mono text-neutral-400">{user.email}</span>
+                <span className="text-[10px] font-mono text-neutral-400">{user.email} • <span className={user.role === 'doctor' ? 'text-teal-400 font-bold' : 'text-indigo-400 font-bold'}>{user.role.toUpperCase()}</span></span>
               </div>
               <button 
                 onClick={onLogout}

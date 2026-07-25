@@ -28,6 +28,11 @@ const userSchema = new mongoose.Schema({
   faceRegistered: {
     type: Boolean,
     default: false,
+  },
+  role: {
+    type: String,
+    enum: ['patient', 'doctor'],
+    default: 'patient',
   }
 }, { timestamps: true });
 

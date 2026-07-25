@@ -1,15 +1,16 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Shield, Mail, Lock, User as UserIcon, Calendar, Activity } from 'lucide-react';
+import { Shield, Mail, Lock, User as UserIcon, Calendar, Activity, X } from 'lucide-react';
 import { User } from '../types';
 
 interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
   onAuthenticate: (user: User) => void;
+  role: 'patient' | 'doctor';
 }
 
-export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthenticate }) => {
+export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthenticate, role }) => {
   const [isLogin, setIsLogin] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [authError, setAuthError] = useState('');
@@ -34,7 +35,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthent
       const endpoint = isLogin ? '/api/auth/login' : '/api/auth/register';
       const payload = isLogin 
         ? { email, password } 
-        : { email, password, name, age: parseInt(age) };
+        : { email, password, name, age: parseInt(age), role };
 
       const res = await fetch(endpoint, {
         method: 'POST',
@@ -49,11 +50,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthent
       
       localStorage.setItem('token', data.token);
       onAuthenticate({
-        id: data.user.id,
+        id: data.user.id || data.user._id,
         name: data.user.name,
         email: data.user.email,
         age: data.user.age,
-        avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
+        role: data.user.role,
+        avatar: role === 'doctor' 
+          ? 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&w=200&q=80'
+          : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
       });
       onClose();
     } catch (err: any) {
@@ -65,6 +69,22 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthent
 
   if (!isOpen) return null;
 
+  const activeColorClass = role === 'doctor' 
+    ? 'from-teal-600 to-cyan-600 hover:from-teal-500 hover:to-cyan-500 shadow-teal-500/25'
+    : 'from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 shadow-indigo-500/25';
+
+  const iconBgClass = role === 'doctor'
+    ? 'bg-teal-500/10 border-teal-500/20 text-teal-400'
+    : 'bg-indigo-500/10 border-indigo-500/20 text-indigo-400';
+
+  const focusBorderClass = role === 'doctor'
+    ? 'focus:border-teal-500'
+    : 'focus:border-indigo-500';
+
+  const textHighlightClass = role === 'doctor'
+    ? 'text-teal-400'
+    : 'text-indigo-400';
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -73,19 +93,27 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthent
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="w-full max-w-md p-8 bg-neutral-950 border border-white/10 shadow-2xl rounded-3xl"
+            className="w-full max-w-md p-8 bg-neutral-950 border border-white/10 shadow-2xl rounded-3xl relative"
           >
+            {/* Close Button */}
+            <button 
+              onClick={onClose}
+              className="absolute top-6 right-6 p-1.5 rounded-xl bg-white/5 border border-white/10 text-neutral-400 hover:text-white transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
             <div className="flex flex-col items-center mb-8">
-              <div className="p-4 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 mb-4">
+              <div className={`p-4 rounded-2xl border ${iconBgClass} mb-4`}>
                 <Activity className="w-8 h-8" />
               </div>
               <h2 className="text-2xl font-bold text-white tracking-tight">
-                {isLogin ? 'Welcome Back' : 'Create Account'}
+                {isLogin ? `${role === 'doctor' ? 'Doctor' : 'Patient'} Sign In` : `Create ${role === 'doctor' ? 'Doctor' : 'Patient'} Account`}
               </h2>
               <p className="text-sm text-neutral-400 mt-2 text-center">
                 {isLogin 
-                  ? 'Sign in to access your biometric health data' 
-                  : 'Register to start tracking your facial vitals'}
+                  ? `Access the ${role === 'doctor' ? 'Clinical Console' : 'Health Dashboard'}` 
+                  : `Register to begin tracking ${role === 'doctor' ? 'clinical metrics' : 'facial vitals'}`}
               </p>
             </div>
 
@@ -106,7 +134,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthent
                       placeholder="Full Name"
                       value={name}
                       onChange={e => setName(e.target.value)}
-                      className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white text-sm focus:outline-none focus:border-indigo-500 transition-colors placeholder:text-neutral-600"
+                      className={`w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white text-sm focus:outline-none ${focusBorderClass} transition-colors placeholder:text-neutral-600`}
                     />
                   </div>
                   <div className="relative">
@@ -116,7 +144,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthent
                       placeholder="Age"
                       value={age}
                       onChange={e => setAge(e.target.value)}
-                      className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white text-sm focus:outline-none focus:border-indigo-500 transition-colors placeholder:text-neutral-600"
+                      className={`w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white text-sm focus:outline-none ${focusBorderClass} transition-colors placeholder:text-neutral-600`}
                     />
                   </div>
                 </>
@@ -129,7 +157,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthent
                   placeholder="Email Address"
                   value={email}
                   onChange={e => setEmail(e.target.value)}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white text-sm focus:outline-none focus:border-indigo-500 transition-colors placeholder:text-neutral-600"
+                  className={`w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white text-sm focus:outline-none ${focusBorderClass} transition-colors placeholder:text-neutral-600`}
                 />
               </div>
 
@@ -140,14 +168,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthent
                   placeholder="Password"
                   value={password}
                   onChange={e => setPassword(e.target.value)}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white text-sm focus:outline-none focus:border-indigo-500 transition-colors placeholder:text-neutral-600"
+                  className={`w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white text-sm focus:outline-none ${focusBorderClass} transition-colors placeholder:text-neutral-600`}
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full py-3.5 mt-2 rounded-xl bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white text-sm font-bold shadow-lg shadow-indigo-500/25 transition-all disabled:opacity-50"
+                className={`w-full py-3.5 mt-2 rounded-xl bg-gradient-to-r ${activeColorClass} text-white text-sm font-bold shadow-lg transition-all disabled:opacity-50`}
               >
                 {isSubmitting ? 'Processing...' : (isLogin ? 'Sign In' : 'Create Account')}
               </button>
@@ -163,7 +191,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthent
                 className="text-sm font-medium text-neutral-400 hover:text-white transition-colors"
               >
                 {isLogin ? "Don't have an account? " : "Already have an account? "}
-                <span className="text-indigo-400 font-bold">{isLogin ? 'Sign up' : 'Sign in'}</span>
+                <span className={`${textHighlightClass} font-bold`}>{isLogin ? 'Sign up' : 'Sign in'}</span>
               </button>
             </div>
           </motion.div>
