@@ -14,7 +14,7 @@ import { MedicalReportAnalyzer } from './components/MedicalReportAnalyzer';
 import { AiHealthChat } from './components/AiHealthChat';
 import { Sidebar, TabType } from './components/Sidebar';
 import { HealthBg3d } from './components/HealthBg3d';
-import { BiometricHeart3d } from './components/BiometricHeart3d';
+import { FacialMesh3d } from './components/FacialMesh3d';
 import { Footer } from './components/Footer';
 
 import { User, HealthReport } from './types';
@@ -235,10 +235,9 @@ export default function App() {
                 </p>
               </div>
 
-              {/* Interactive 3D Biometric Heart Element */}
+              {/* Interactive 3D Facial Structure Mesh Element */}
               <div className="w-full max-w-4xl px-4">
-                <BiometricHeart3d 
-                  initialBpm={72} 
+                <FacialMesh3d 
                   onScanClick={() => {
                     setAuthRole('patient');
                     setIsAuthModalOpen(true);
@@ -452,9 +451,8 @@ export default function App() {
                   {/* TAB 1: Dashboard & Vitals Overview */}
                   {activeTab === 'dashboard' && (
                     <div className="space-y-8">
-                      {/* 3D Interactive Cardiac Model Section */}
-                      <BiometricHeart3d 
-                        initialBpm={healthReports.length > 0 ? healthReports[0].vitals.heartRate : 72} 
+                      {/* 3D Interactive Facial Structure Mesh Section */}
+                      <FacialMesh3d 
                         onScanClick={() => setActiveTab('scanner')} 
                       />
 
