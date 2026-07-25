@@ -1,4 +1,6 @@
 import express from "express";
+import http from "http";
+import { setupWebSocket } from "./server/websocket";
 import path from "path";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI } from "@google/genai";
@@ -9,6 +11,8 @@ import cors from "cors";
 import { connectDB } from "./server/db";
 import { User } from "./server/models/User";
 import { HealthReport } from "./server/models/HealthReport";
+import { Scan } from "./server/models/Scan";
+import { Session } from "./server/models/Session";
 import { authMiddleware, AuthRequest } from "./server/middleware/auth";
 import multer from "multer";
 import fs from "fs";
@@ -655,8 +659,9 @@ app.post("/api/scanner-wellness", authMiddleware, upload.single("video"), async 
 });
 
 async function startServer() {
-  await connectDB();
-  
+  const server = http.createServer(app);
+  setupWebSocket(server);
+
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({
       server: { middlewareMode: true },
@@ -664,15 +669,16 @@ async function startServer() {
     });
     app.use(vite.middlewares);
   } else {
-    const distPath = path.join(process.cwd(), "dist");
+    const distPath = path.join(process.cwd(), "dist/client");
     app.use(express.static(distPath));
     app.get("*", (_req, res) => {
       res.sendFile(path.join(distPath, "index.html"));
     });
   }
 
-  app.listen(PORT, "0.0.0.0", () => {
-    console.log(`GuardianOS AI Server running on http://localhost:${PORT}`);
+  server.listen(PORT, "0.0.0.0", async () => {
+    await connectDB();
+    console.log(`GuardianOS AI Server & WebSocket running on http://localhost:${PORT}`);
   });
 }
 

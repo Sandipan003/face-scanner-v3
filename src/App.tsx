@@ -10,6 +10,7 @@ import {
 import { Navbar } from './components/Navbar';
 import { AuthModal } from './components/AuthModal';
 import { ContactlessScanner } from './components/ContactlessScanner';
+import { ScannerFlow } from './components/ScannerFlow';
 import { MedicalReportAnalyzer } from './components/MedicalReportAnalyzer';
 import { AiHealthChat } from './components/AiHealthChat';
 import { Sidebar, TabType } from './components/Sidebar';
@@ -560,8 +561,9 @@ export default function App() {
 
                   {/* TAB 2: Face Scanner */}
                   {activeTab === 'scanner' && (
-                    <ContactlessScanner 
-                      onScanComplete={() => {
+                    <ScannerFlow 
+                      token={localStorage.getItem('token') || ''}
+                      onComplete={() => {
                         const token = localStorage.getItem('token');
                         if (token) fetchHealthReports(token);
                       }} 
