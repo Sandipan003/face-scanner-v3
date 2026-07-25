@@ -14,6 +14,7 @@ import { MedicalReportAnalyzer } from './components/MedicalReportAnalyzer';
 import { AiHealthChat } from './components/AiHealthChat';
 import { Sidebar, TabType } from './components/Sidebar';
 import { HealthBg3d } from './components/HealthBg3d';
+import { BiometricHeart3d } from './components/BiometricHeart3d';
 import { Footer } from './components/Footer';
 
 import { User, HealthReport } from './types';
@@ -234,6 +235,17 @@ export default function App() {
                 </p>
               </div>
 
+              {/* Interactive 3D Biometric Heart Element */}
+              <div className="w-full max-w-4xl px-4">
+                <BiometricHeart3d 
+                  initialBpm={72} 
+                  onScanClick={() => {
+                    setAuthRole('patient');
+                    setIsAuthModalOpen(true);
+                  }} 
+                />
+              </div>
+
               {/* Portal Selection Cards */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-4xl px-4">
                 {/* Patient Entry Card */}
@@ -440,6 +452,12 @@ export default function App() {
                   {/* TAB 1: Dashboard & Vitals Overview */}
                   {activeTab === 'dashboard' && (
                     <div className="space-y-8">
+                      {/* 3D Interactive Cardiac Model Section */}
+                      <BiometricHeart3d 
+                        initialBpm={healthReports.length > 0 ? healthReports[0].vitals.heartRate : 72} 
+                        onScanClick={() => setActiveTab('scanner')} 
+                      />
+
                       {/* Top Header Cards */}
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div className="p-6 rounded-3xl bg-neutral-900/50 border border-white/10 backdrop-blur-xl flex items-center gap-4">
