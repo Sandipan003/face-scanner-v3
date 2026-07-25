@@ -44,17 +44,15 @@ export const ProphecyOrb3d: React.FC<ProphecyOrb3dProps> = ({ onScanClick }) => 
 
     const orbMat = new THREE.MeshPhysicalMaterial({
       color: 0xffffff,
-      transmission: 0.9,
-      opacity: 1,
-      metalness: 0,
-      roughness: 0.1,
+      metalness: 0.1,
+      roughness: 0.05,
       ior: 1.5,
-      thickness: 0.5,
-      specularIntensity: 2.0,
-      specularColor: new THREE.Color(0xffffff),
       envMap: renderTarget.texture,
+      envMapIntensity: 1.5,
       transparent: true,
-      side: THREE.FrontSide
+      opacity: 0.3,
+      side: THREE.FrontSide,
+      depthWrite: false
     });
 
     const orbMesh = new THREE.Mesh(orbGeom, orbMat);
@@ -67,7 +65,8 @@ export const ProphecyOrb3d: React.FC<ProphecyOrb3dProps> = ({ onScanClick }) => 
       transparent: true,
       opacity: 0.15,
       blending: THREE.AdditiveBlending,
-      side: THREE.BackSide
+      side: THREE.BackSide,
+      depthWrite: false
     });
     const glowMesh = new THREE.Mesh(glowGeom, glowMat);
     orbGroup.add(glowMesh);
@@ -82,7 +81,8 @@ export const ProphecyOrb3d: React.FC<ProphecyOrb3dProps> = ({ onScanClick }) => 
       color: 0xff4500,
       transparent: true,
       opacity: 0.8,
-      blending: THREE.AdditiveBlending
+      blending: THREE.AdditiveBlending,
+      depthWrite: false
     });
     const coreMesh = new THREE.Mesh(coreGeom, coreMat);
     orbGroup.add(coreMesh);
