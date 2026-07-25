@@ -369,16 +369,14 @@ export const ProphecyOrb3d: React.FC<ProphecyOrb3dProps> = ({ onScanClick }) => 
       ctx.beginPath();
       ctx.moveTo(0, height / 2);
 
-      // Create an erratic, magical energy wave
+      // Create a smooth, magical energy wave
       for (let i = 0; i < width; i++) {
-        // Base sine wave
-        const wave1 = Math.sin((i + offset) * 0.02) * 20;
-        // Higher frequency noise
-        const wave2 = Math.sin((i + offset * 2) * 0.1) * 8;
-        // Random magical sparks/noise
-        const noise = (Math.random() - 0.5) * 15;
+        // Smooth sine waves combining low and medium frequencies
+        const wave1 = Math.sin((i * 0.01) + offset) * 15;
+        const wave2 = Math.sin((i * 0.03) - offset * 1.5) * 8;
+        const wave3 = Math.sin((i * 0.07) + offset * 2) * 3;
         
-        ctx.lineTo(i, height / 2 + wave1 + wave2 + noise);
+        ctx.lineTo(i, height / 2 + wave1 + wave2 + wave3);
       }
 
       ctx.strokeStyle = "rgba(251, 191, 36, 0.4)"; // Amber glow
@@ -389,7 +387,7 @@ export const ProphecyOrb3d: React.FC<ProphecyOrb3dProps> = ({ onScanClick }) => 
       ctx.lineWidth = 1;
       ctx.stroke();
 
-      offset += 5;
+      offset += 0.05;
       animId = requestAnimationFrame(drawMagic);
     };
 
