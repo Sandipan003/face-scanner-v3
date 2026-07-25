@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
-import { Eye, Zap, RotateCcw, Scan, ShieldCheck, User } from "lucide-react";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
+import { Eye, Zap, RotateCcw, Scan, ShieldCheck, User, Loader2 } from "lucide-react";
 
 interface FacialMesh3dProps {
   onScanClick?: () => void;
@@ -10,6 +11,7 @@ export const FacialMesh3d: React.FC<FacialMesh3dProps> = ({ onScanClick }) => {
   const mountRef = useRef<HTMLDivElement | null>(null);
   const [scanBeamY, setScanBeamY] = useState<number>(0);
   const [wireframeColor, setWireframeColor] = useState<string>("cyan");
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const pulseCanvasRef = useRef<HTMLCanvasElement | null>(null);
 
   useEffect(() => {
@@ -22,9 +24,9 @@ export const FacialMesh3d: React.FC<FacialMesh3dProps> = ({ onScanClick }) => {
     // 1. Scene Setup
     const scene = new THREE.Scene();
     
-    // 2. Camera Setup (Frontal portrait perspective matching reference image)
+    // 2. Camera Setup
     const camera = new THREE.PerspectiveCamera(40, width / height, 0.1, 1000);
-    camera.position.set(0, 0.2, 13.5);
+    camera.position.set(0, 0, 10); // Adjust based on model size
 
     // 3. WebGL Renderer
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -34,212 +36,66 @@ export const FacialMesh3d: React.FC<FacialMesh3dProps> = ({ onScanClick }) => {
     renderer.toneMappingExposure = 1.3;
     container.appendChild(renderer.domElement);
 
-    // 4. Construct High-Density Anatomical Human Head Mesh
-    const createHighDensityHeadGeometry = () => {
-      // High-density sphere resolution for detailed wireframe grid
-      const geom = new THREE.SphereGeometry(3.6, 96, 96);
-      const pos = geom.attributes.position;
-
-      for (let i = 0; i < pos.count; i++) {
-        let x = pos.getX(i);
-        let y = pos.getY(i);
-        let z = pos.getZ(i);
-
-        const isFront = z > 0;
-
-        if (isFront) {
-          // 1. Jawline & Chin Taper
-          if (y < -0.4) {
-            const jawFactor = 1 - 0.38 * Math.min(1, (-0.4 - y) / 3.0);
-            x *= jawFactor;
-          }
-
-          // 2. Forehead Dome (y > 1.4)
-          if (y > 1.4) {
-            z += 0.22 * Math.sin(((y - 1.4) / 2.2) * Math.PI);
-          }
-
-          // 3. Eyebrow Ridges (y ~ 1.2 to 1.8)
-          const browDist = Math.abs(y - 1.35);
-          if (browDist < 0.45 && Math.abs(x) < 2.2) {
-            z += 0.38 * (1 - browDist / 0.45) * (1 - Math.abs(x) / 2.3);
-          }
-
-          // 4. Eye Sockets & Orbit (x ~ ±1.25, y ~ 0.85)
-          const leftEyeDist = Math.sqrt(Math.pow(x + 1.25, 2) + Math.pow(y - 0.85, 2));
-          const rightEyeDist = Math.sqrt(Math.pow(x - 1.25, 2) + Math.pow(y - 0.85, 2));
-          const minEyeDist = Math.min(leftEyeDist, rightEyeDist);
-
-          if (minEyeDist < 0.9) {
-            // Depress eye orbit socket
-            z -= 0.7 * (1 - minEyeDist / 0.9);
-          }
-
-          // 5. Nose Bridge, Tip & Nostril Wings (y from -0.5 to 1.2)
-          if (y > -0.5 && y < 1.2 && Math.abs(x) < 0.95) {
-            const noseT = (y + 0.5) / 1.7; // 0 to 1
-            const noseWidthFactor = 1 - Math.abs(x) / 0.95;
-            
-            // Bridge protrusion
-            z += 0.85 * Math.sin(noseT * Math.PI) * noseWidthFactor;
-
-            // Tip prominence (y ~ -0.05)
-            const tipDist = Math.sqrt(Math.pow(x, 2) + Math.pow(y + 0.05, 2));
-            if (tipDist < 0.5) {
-              z += 0.6 * (1 - tipDist / 0.5);
-            }
-
-            // Nostril wings (x ~ ±0.45, y ~ -0.2)
-            const leftNostril = Math.sqrt(Math.pow(x + 0.45, 2) + Math.pow(y + 0.2, 2));
-            const rightNostril = Math.sqrt(Math.pow(x - 0.45, 2) + Math.pow(y + 0.2, 2));
-            if (Math.min(leftNostril, rightNostril) < 0.35) {
-              z += 0.3 * (1 - Math.min(leftNostril, rightNostril) / 0.35);
-            }
-          }
-
-          // 6. Cheekbones (y ~ 0.0 to 0.7, x ~ ±1.8)
-          const leftCheek = Math.sqrt(Math.pow(x + 1.8, 2) + Math.pow(y - 0.2, 2));
-          const rightCheek = Math.sqrt(Math.pow(x - 1.8, 2) + Math.pow(y - 0.2, 2));
-          if (Math.min(leftCheek, rightCheek) < 1.1) {
-            z += 0.42 * (1 - Math.min(leftCheek, rightCheek) / 1.1);
-          }
-
-          // 7. Lips & Philtrum (y ~ -0.9, x < 1.1)
-          const mouthDist = Math.sqrt(Math.pow(x, 2) + Math.pow(y + 0.9, 2));
-          if (mouthDist < 1.15) {
-            const lipVal = Math.sin((1 - mouthDist / 1.15) * Math.PI);
-            z += 0.48 * lipVal;
-
-            // Seam between lips
-            if (Math.abs(y + 0.9) < 0.1 && Math.abs(x) < 0.75) {
-              z -= 0.25;
-            }
-          }
-
-          // 8. Chin Projection (y ~ -2.7)
-          const chinDist = Math.sqrt(Math.pow(x, 2) + Math.pow(y + 2.7, 2));
-          if (chinDist < 0.8) {
-            z += 0.5 * (1 - chinDist / 0.8);
-          }
-
-        } else {
-          // Back of skull
-          z *= 0.88;
-          if (y < -1.0) x *= 0.85;
-        }
-
-        pos.setXYZ(i, x, y, z);
-      }
-
-      geom.computeVertexNormals();
-      return geom;
-    };
-
-    // 5. Create Ears Geometry
-    const createEarGeometry = (isRight: boolean) => {
-      const earGroup = new THREE.Group();
-      const earShape = new THREE.Shape();
-      earShape.moveTo(0, 0);
-      earShape.bezierCurveTo(0.8, 0.4, 1.2, 1.5, 0.6, 2.2);
-      earShape.bezierCurveTo(0.2, 2.6, -0.6, 2.4, -0.7, 1.8);
-      earShape.bezierCurveTo(-0.8, 1.2, -0.4, 0.4, 0, 0);
-
-      const extrudeSettings = {
-        depth: 0.3,
-        bevelEnabled: true,
-        bevelThickness: 0.15,
-        bevelSize: 0.15,
-        bevelSegments: 8
-      };
-      const earGeom = new THREE.ExtrudeGeometry(earShape, extrudeSettings);
-      earGeom.center();
-
-      const earMat = new THREE.MeshBasicMaterial({
-        color: wireframeColor === "emerald" ? 0x10b981 : wireframeColor === "rose" ? 0xf43f5e : 0x38bdf8,
-        wireframe: true,
-        transparent: true,
-        opacity: 0.65
-      });
-
-      const earMesh = new THREE.Mesh(earGeom, earMat);
-      earMesh.position.set(isRight ? 3.35 : -3.35, 0.3, 0.1);
-      earMesh.rotation.y = isRight ? -0.45 : 0.45;
-      earMesh.rotation.z = isRight ? -0.1 : 0.1;
-
-      earGroup.add(earMesh);
-      return earGroup;
-    };
-
-    const headGeometry = createHighDensityHeadGeometry();
-
-    // Wireframe Line Material matching reference image
-    const wireframeColorHex = wireframeColor === "emerald" ? 0x10b981 : wireframeColor === "rose" ? 0xf43f5e : 0x38bdf8;
-
-    const mainWireframeMat = new THREE.MeshBasicMaterial({
-      color: wireframeColorHex,
-      wireframe: true,
-      transparent: true,
-      opacity: 0.7
-    });
-
-    const headWireframeMesh = new THREE.Mesh(headGeometry, mainWireframeMat);
-
-    // Inner subtle glow mesh
-    const innerGlowMat = new THREE.MeshBasicMaterial({
-      color: wireframeColorHex,
-      transparent: true,
-      opacity: 0.08
-    });
-    const innerGlowMesh = new THREE.Mesh(headGeometry, innerGlowMat);
-
+    // 4. Head Group
     const headGroup = new THREE.Group();
-    headGroup.add(headWireframeMesh);
-    headGroup.add(innerGlowMesh);
-
-    // Add Ears
-    headGroup.add(createEarGeometry(false));
-    headGroup.add(createEarGeometry(true));
-
     scene.add(headGroup);
 
-    // 6. High-Density Wireframe Eyeballs & Irises
-    const createWireframeEye = (x: number, y: number, z: number) => {
-      const eyeGroup = new THREE.Group();
-      eyeGroup.position.set(x, y, z);
+    // Wireframe Color Hex
+    const wireframeColorHex = wireframeColor === "emerald" ? 0x10b981 : wireframeColor === "rose" ? 0xf43f5e : 0x38bdf8;
 
-      // Wireframe Eyeball Sphere
-      const eyeGeom = new THREE.SphereGeometry(0.48, 24, 24);
-      const eyeMat = new THREE.MeshBasicMaterial({
-        color: wireframeColorHex,
-        wireframe: true,
-        transparent: true,
-        opacity: 0.8
-      });
-      const eyeMesh = new THREE.Mesh(eyeGeom, eyeMat);
-      eyeGroup.add(eyeMesh);
+    // 5. Load Accurate 3D Model (Lee Perry Smith 3D Scan)
+    const loader = new GLTFLoader();
+    loader.load(
+      "/models/head.glb",
+      (gltf) => {
+        setIsLoading(false);
+        
+        // Find the mesh inside the GLTF
+        gltf.scene.traverse((child) => {
+          if (child instanceof THREE.Mesh) {
+            // Apply Wireframe Material
+            const mainWireframeMat = new THREE.MeshBasicMaterial({
+              color: wireframeColorHex,
+              wireframe: true,
+              transparent: true,
+              opacity: 0.6
+            });
+            
+            // Inner subtle glow mesh to give it depth
+            const innerGlowMat = new THREE.MeshBasicMaterial({
+              color: wireframeColorHex,
+              transparent: true,
+              opacity: 0.05
+            });
 
-      // Inner Iris Rings
-      const irisGeom = new THREE.TorusGeometry(0.24, 0.04, 16, 32);
-      const irisMat = new THREE.MeshBasicMaterial({
-        color: 0xffffff,
-        wireframe: true,
-        transparent: true,
-        opacity: 0.95
-      });
-      const irisMesh = new THREE.Mesh(irisGeom, irisMat);
-      irisMesh.position.z = 0.42;
-      eyeGroup.add(irisMesh);
+            const wireframeMesh = new THREE.Mesh(child.geometry, mainWireframeMat);
+            const solidMesh = new THREE.Mesh(child.geometry, innerGlowMat);
+            
+            // Scale and Position adjustments to center the face
+            wireframeMesh.scale.set(10, 10, 10);
+            solidMesh.scale.set(9.9, 9.9, 9.9);
+            
+            wireframeMesh.position.set(0, -0.5, 0);
+            solidMesh.position.set(0, -0.5, 0);
 
-      return eyeGroup;
-    };
+            // The Lee Perry Smith model is usually rotated
+            wireframeMesh.rotation.y = -Math.PI / 2;
+            solidMesh.rotation.y = -Math.PI / 2;
 
-    const leftEye = createWireframeEye(-1.25, 0.85, 2.65);
-    const rightEye = createWireframeEye(1.25, 0.85, 2.65);
-    headGroup.add(leftEye);
-    headGroup.add(rightEye);
+            headGroup.add(wireframeMesh);
+            headGroup.add(solidMesh);
+          }
+        });
+      },
+      undefined,
+      (error) => {
+        console.error("Error loading 3D head model:", error);
+        setIsLoading(false);
+      }
+    );
 
-    // 7. Scanning Laser Beam Line
-    const beamGeom = new THREE.PlaneGeometry(9.0, 0.15);
+    // 6. Scanning Laser Beam Line
+    const beamGeom = new THREE.PlaneGeometry(8.0, 0.12);
     const beamMat = new THREE.MeshBasicMaterial({
       color: wireframeColorHex,
       side: THREE.DoubleSide,
@@ -248,10 +104,10 @@ export const FacialMesh3d: React.FC<FacialMesh3dProps> = ({ onScanClick }) => {
       blending: THREE.AdditiveBlending
     });
     const scanBeam = new THREE.Mesh(beamGeom, beamMat);
-    scanBeam.position.z = 3.6;
+    scanBeam.position.z = 2.5; // Place in front of the face
     scene.add(scanBeam);
 
-    // 8. Lighting Setup
+    // 7. Lighting Setup
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
     scene.add(ambientLight);
 
@@ -259,7 +115,7 @@ export const FacialMesh3d: React.FC<FacialMesh3dProps> = ({ onScanClick }) => {
     pointLight.position.set(6, 6, 10);
     scene.add(pointLight);
 
-    // 9. Interactive Mouse Drag & Gaze Tracking
+    // 8. Interactive Mouse Drag & Gaze Tracking
     let isDragging = false;
     let previousMousePosition = { x: 0, y: 0 };
     let targetRotationX = 0;
@@ -321,7 +177,7 @@ export const FacialMesh3d: React.FC<FacialMesh3dProps> = ({ onScanClick }) => {
     };
     window.addEventListener("resize", handleResize);
 
-    // 10. Animation Loop
+    // 9. Animation Loop
     const clock = new THREE.Clock();
     let animId: number;
 
@@ -333,10 +189,10 @@ export const FacialMesh3d: React.FC<FacialMesh3dProps> = ({ onScanClick }) => {
       headGroup.rotation.y += (targetRotationY - headGroup.rotation.y) * 0.08;
       headGroup.rotation.x += (targetRotationX - headGroup.rotation.x) * 0.08;
 
-      // Animate laser scan sweep (-3.8 to +3.8)
-      const beamY = Math.sin(elapsedTime * 2.2) * 3.8;
+      // Animate laser scan sweep (-3.0 to +3.0)
+      const beamY = Math.sin(elapsedTime * 2.2) * 3.0;
       scanBeam.position.y = beamY;
-      setScanBeamY(Math.round(((beamY + 3.8) / 7.6) * 100));
+      setScanBeamY(Math.round(((beamY + 3.0) / 6.0) * 100));
 
       renderer.render(scene, camera);
     };
@@ -358,7 +214,7 @@ export const FacialMesh3d: React.FC<FacialMesh3dProps> = ({ onScanClick }) => {
     };
   }, [wireframeColor]);
 
-  // 11. Optical rPPG Signal Canvas Loop
+  // 10. Optical rPPG Signal Canvas Loop
   useEffect(() => {
     const canvas = pulseCanvasRef.current;
     if (!canvas) return;
@@ -421,12 +277,12 @@ export const FacialMesh3d: React.FC<FacialMesh3dProps> = ({ onScanClick }) => {
               <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-cyan-500"></span>
             </span>
             <span className="text-[10px] font-mono font-bold tracking-widest uppercase text-cyan-400">
-              High-Density 3D Wireframe Head Scan
+              High-Fidelity 3D Scan Model
             </span>
           </div>
           <h2 className="text-2xl font-extrabold text-white mt-1 flex items-center gap-2">
             <User className="w-6 h-6 text-cyan-400" />
-            <span>Cybernetic Human Face 3D</span>
+            <span>Accurate Anatomical Face</span>
           </h2>
         </div>
 
@@ -464,10 +320,17 @@ export const FacialMesh3d: React.FC<FacialMesh3dProps> = ({ onScanClick }) => {
         ref={mountRef} 
         className="w-full h-[360px] sm:h-[420px] cursor-grab active:cursor-grabbing relative flex items-center justify-center rounded-2xl bg-black border border-white/5 shadow-inner overflow-hidden"
       >
+        {isLoading && (
+          <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-black/60 backdrop-blur-sm">
+            <Loader2 className="w-8 h-8 text-cyan-500 animate-spin mb-3" />
+            <span className="text-cyan-400 font-mono text-sm tracking-widest uppercase">Loading 3D Model...</span>
+          </div>
+        )}
+
         {/* Floating Hint */}
         <div className="absolute top-4 left-4 z-20 flex items-center gap-2 bg-neutral-950/80 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10 text-[11px] text-neutral-300 pointer-events-none">
           <RotateCcw className="w-3.5 h-3.5 text-cyan-400 animate-spin" style={{ animationDuration: '6s' }} />
-          <span>Move Cursor / Drag to Orbit 3D Wireframe Face</span>
+          <span>Move Cursor / Drag to Orbit 3D Face</span>
         </div>
 
         {/* Laser Sweep Status Badge */}
@@ -483,10 +346,10 @@ export const FacialMesh3d: React.FC<FacialMesh3dProps> = ({ onScanClick }) => {
               <Eye className="w-5 h-5" />
             </div>
             <div>
-              <span className="text-[9px] uppercase font-bold text-neutral-500 block">Wireframe Resolution</span>
+              <span className="text-[9px] uppercase font-bold text-neutral-500 block">Mesh Accuracy</span>
               <span className="text-sm font-extrabold font-mono text-white flex items-center gap-1">
                 <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-                <span>96x96 Quad Grid (Anatomical)</span>
+                <span>True Anatomical Scan</span>
               </span>
             </div>
           </div>
