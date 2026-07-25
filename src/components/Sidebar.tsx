@@ -1,7 +1,7 @@
 import React from 'react';
 import { 
-  Activity, Camera, FileText, MessageSquareText, Stethoscope, 
-  LayoutDashboard, LogOut, ChevronRight, Menu, X, ShieldCheck 
+  Sparkles, Camera, BookOpen, MessageSquareText, Stethoscope, 
+  LayoutDashboard, LogOut, ChevronRight, Menu, X, ShieldCheck, Wand2, Eye
 } from 'lucide-react';
 import { User } from '../types';
 
@@ -27,54 +27,54 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const menuItems = [
     {
       id: 'dashboard' as TabType,
-      label: 'Dashboard & Vitals',
+      label: 'The Great Hall',
       icon: LayoutDashboard,
       badge: 'Overview',
-      badgeColor: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20'
+      badgeColor: 'bg-amber-500/10 text-amber-400 border-amber-500/20'
     },
     {
       id: 'scanner' as TabType,
-      label: 'Face rPPG Scanner',
-      icon: Camera,
-      badge: 'Live',
-      badgeColor: 'bg-rose-500/10 text-rose-400 border-rose-500/20'
+      label: 'Prophecy Orb',
+      icon: Eye,
+      badge: 'Divination',
+      badgeColor: 'bg-red-800/20 text-red-400 border-red-500/20'
     },
     {
       id: 'analyzer' as TabType,
-      label: 'Medical OCR Analyzer',
-      icon: FileText,
-      badge: 'Gemini AI',
-      badgeColor: 'bg-teal-500/10 text-teal-400 border-teal-500/20'
+      label: 'Ancient Scrolls',
+      icon: BookOpen,
+      badge: 'Translation',
+      badgeColor: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
     },
     {
       id: 'chat' as TabType,
-      label: 'AI Health Companion',
+      label: 'Portrait Healer',
       icon: MessageSquareText,
-      badge: 'RAG',
+      badge: 'Consult',
       badgeColor: 'bg-purple-500/10 text-purple-400 border-purple-500/20'
     },
     {
       id: 'brief' as TabType,
-      label: 'Doctor Brief Prep',
+      label: 'Healer\'s Prep',
       icon: Stethoscope,
-      badge: 'Clinical',
-      badgeColor: 'bg-blue-500/10 text-blue-400 border-blue-500/20'
+      badge: 'Records',
+      badgeColor: 'bg-amber-700/20 text-amber-300 border-amber-600/30'
     }
   ];
 
   return (
     <>
       {/* Mobile Top Header Toggle */}
-      <div className="lg:hidden sticky top-0 z-40 w-full bg-black/80 backdrop-blur-xl border-b border-white/10 px-4 py-3 flex items-center justify-between">
+      <div className="lg:hidden sticky top-0 z-40 w-full bg-black/80 backdrop-blur-xl border-b border-amber-900/30 px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2.5">
-          <div className="p-2 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400">
-            <Activity className="w-5 h-5" />
+          <div className="p-2 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400">
+            <Wand2 className="w-5 h-5" />
           </div>
-          <span className="font-extrabold text-white text-lg tracking-tight">Swast AI</span>
+          <span className="font-extrabold text-amber-100 text-lg tracking-tight font-serif">Ministry of Magic</span>
         </div>
         <button
           onClick={onToggleMobile}
-          className="p-2 rounded-xl bg-white/5 border border-white/10 text-neutral-300 hover:text-white"
+          className="p-2 rounded-xl bg-black/40 border border-amber-900/40 text-amber-200/60 hover:text-amber-100"
         >
           {isOpenMobile ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
         </button>
@@ -90,25 +90,25 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
       {/* Sidebar Container */}
       <aside className={`
-        fixed lg:sticky top-0 left-0 z-50 h-screen w-72 bg-neutral-950/80 border-r border-white/10 backdrop-blur-2xl flex flex-col justify-between p-5 transition-transform duration-300 ease-in-out
+        fixed lg:sticky top-0 left-0 z-50 h-screen w-72 glass-panel-magical !border-y-0 !border-l-0 !border-r border-r-amber-900/40 flex flex-col justify-between p-5 transition-transform duration-300 ease-in-out
         ${isOpenMobile ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
       `}>
         <div className="space-y-8">
           {/* Logo / Brand Header */}
           <div className="flex items-center gap-3 px-2 pt-2">
-            <div className="p-2.5 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-lg shadow-indigo-500/25">
-              <Activity className="w-6 h-6" />
+            <div className="p-2.5 rounded-2xl bg-gradient-to-br from-amber-600 to-red-800 text-amber-100 shadow-[0_0_15px_rgba(245,158,11,0.3)] border border-amber-500/40">
+              <Wand2 className="w-6 h-6" />
             </div>
             <div>
-              <h2 className="text-xl font-extrabold text-white tracking-tight">Swast AI</h2>
-              <span className="text-[10px] font-mono text-neutral-400 block -mt-1">Health Intelligence</span>
+              <h2 className="text-xl font-extrabold text-amber-100 tracking-tight font-serif">Ministry of Magic</h2>
+              <span className="text-[10px] font-sans font-bold text-amber-400 block tracking-widest uppercase mt-0.5">Identity Division</span>
             </div>
           </div>
 
           {/* Navigation Links */}
           <div className="space-y-1.5">
-            <span className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest px-3 block mb-2">
-              Healthcare Modules
+            <span className="text-[10px] font-bold text-amber-600 uppercase tracking-[0.2em] px-3 block mb-2 font-sans">
+              Magical Departments
             </span>
 
             {menuItems.map((item) => {
@@ -122,15 +122,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     if (isOpenMobile) onToggleMobile();
                   }}
                   className={`
-                    w-full flex items-center justify-between p-3 rounded-2xl text-xs font-bold transition-all group relative overflow-hidden
+                    w-full flex items-center justify-between p-3 rounded-2xl text-xs font-bold transition-all group relative overflow-hidden font-sans
                     ${isActive 
-                      ? 'bg-gradient-to-r from-indigo-600/30 to-purple-600/20 text-white border border-indigo-500/40 shadow-lg shadow-indigo-500/10' 
-                      : 'text-neutral-400 hover:text-white hover:bg-white/5 border border-transparent'
+                      ? 'bg-gradient-to-r from-amber-900/40 to-red-900/30 text-amber-100 border border-amber-500/40 shadow-[0_0_10px_rgba(245,158,11,0.15)]' 
+                      : 'text-amber-200/60 hover:text-amber-100 hover:bg-white/5 border border-transparent'
                     }
                   `}
                 >
                   <div className="flex items-center gap-3">
-                    <Icon className={`w-4 h-4 transition-colors ${isActive ? 'text-indigo-400' : 'text-neutral-500 group-hover:text-neutral-300'}`} />
+                    <Icon className={`w-4 h-4 transition-colors ${isActive ? 'text-amber-400' : 'text-amber-900/60 group-hover:text-amber-200/80'}`} />
                     <span>{item.label}</span>
                   </div>
 
@@ -144,30 +144,30 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
 
         {/* User Info & Footer */}
-        <div className="pt-6 border-t border-white/10 space-y-4">
-          <div className="p-3.5 rounded-2xl bg-white/5 border border-white/5 flex items-center justify-between gap-3">
+        <div className="pt-6 border-t border-amber-900/30 space-y-4">
+          <div className="p-3.5 rounded-2xl bg-black/40 border border-amber-900/40 flex items-center justify-between gap-3">
             <div className="flex items-center gap-3 overflow-hidden">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-500 to-teal-400 flex items-center justify-center font-bold text-white text-sm shrink-0">
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-amber-600 to-amber-400 flex items-center justify-center font-bold text-black text-sm shrink-0 font-serif">
                 {user.name.charAt(0).toUpperCase()}
               </div>
               <div className="flex flex-col truncate">
-                <span className="text-xs font-bold text-white truncate">{user.name}</span>
-                <span className="text-[10px] text-neutral-400 font-mono truncate">{user.email}</span>
+                <span className="text-xs font-bold text-amber-100 truncate font-serif">{user.name}</span>
+                <span className="text-[10px] text-amber-200/60 font-sans truncate">{user.email}</span>
               </div>
             </div>
 
             <button
               onClick={onLogout}
-              className="p-2 rounded-xl bg-white/5 hover:bg-red-500/10 text-neutral-400 hover:text-red-400 transition-colors shrink-0"
-              title="Sign Out"
+              className="p-2 rounded-xl bg-black/60 hover:bg-red-900/30 text-amber-200/50 hover:text-red-400 transition-colors shrink-0 border border-transparent hover:border-red-900/50"
+              title="Disapparate (Sign Out)"
             >
               <LogOut className="w-4 h-4" />
             </button>
           </div>
 
-          <div className="flex items-center gap-2 px-2 text-[10px] text-neutral-500 font-mono">
-            <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
-            <span>HIPAA Protected Data</span>
+          <div className="flex items-center gap-2 px-2 text-[10px] text-amber-600 font-sans tracking-widest uppercase font-bold">
+            <ShieldCheck className="w-3 h-3 text-amber-500" />
+            <span>Magically Sealed</span>
           </div>
         </div>
       </aside>

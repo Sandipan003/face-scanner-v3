@@ -4,7 +4,7 @@ import {
   Activity, Shield, Camera, HeartPulse, ChevronRight, TrendingUp, 
   User as UserIcon, LogOut, ArrowRight, UserCheck, Stethoscope, 
   Sparkles, History, Heart, Clipboard, RefreshCw, Calendar, 
-  AlertTriangle, CheckCircle, FileText, MessageSquareText 
+  AlertTriangle, CheckCircle, FileText, MessageSquareText, Wand2, BookOpen
 } from 'lucide-react';
 
 import { Navbar } from './components/Navbar';
@@ -14,7 +14,7 @@ import { MedicalReportAnalyzer } from './components/MedicalReportAnalyzer';
 import { AiHealthChat } from './components/AiHealthChat';
 import { Sidebar, TabType } from './components/Sidebar';
 import { HealthBg3d } from './components/HealthBg3d';
-import { FacialMesh3d } from './components/FacialMesh3d';
+import { ProphecyOrb3d } from './components/ProphecyOrb3d';
 import { Footer } from './components/Footer';
 
 import { User, HealthReport } from './types';
@@ -201,10 +201,10 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#050505] text-white font-sans selection:bg-indigo-500 selection:text-white flex flex-col relative overflow-x-hidden">
+    <div className="min-h-screen bg-neutral-950 bg-magical-stars text-amber-100 font-serif selection:bg-amber-600 selection:text-white flex flex-col relative overflow-x-hidden">
       
-      {/* Dynamic 3D Healthcare Canvas Background */}
-      <HealthBg3d />
+      {/* Background Effect placeholder */}
+      {/* <HealthBg3d /> - Assuming we want to keep it or replace it later, let's leave it for now */}
 
       {!user ? (
         <>
@@ -227,17 +227,18 @@ export default function App() {
               className="flex flex-col items-center justify-center space-y-12 py-10"
             >
               <div className="text-center space-y-4 max-w-3xl">
-                <h1 className="text-4xl sm:text-7xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-b from-white to-neutral-400">
-                  Swast AI
+                <h1 className="text-4xl sm:text-7xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-b from-amber-200 to-amber-600 font-serif">
+                  Ministry of Magic
                 </h1>
-                <p className="text-base sm:text-xl text-neutral-400 leading-relaxed">
-                  Next-generation health screening platform. Perform contactless optical face scans, analyze lab documents with Gemini OCR, and query our RAG health companion.
+                <h2 className="text-2xl sm:text-4xl text-amber-500 font-serif">Identity & Vitality Scanner</h2>
+                <p className="text-base sm:text-xl text-amber-200/70 leading-relaxed font-sans">
+                  The wizarding world's premier divination platform. Gaze into the Prophecy Orb for your magical aura checkup, analyze ancient scrolls, and consult with the Portrait of the Healer.
                 </p>
               </div>
 
-              {/* Interactive 3D Facial Structure Mesh Element */}
+              {/* Magical Prophecy Orb Element */}
               <div className="w-full max-w-4xl px-4">
-                <FacialMesh3d 
+                <ProphecyOrb3d 
                   onScanClick={() => {
                     setAuthRole('patient');
                     setIsAuthModalOpen(true);
@@ -247,59 +248,59 @@ export default function App() {
 
               {/* Portal Selection Cards */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-4xl px-4">
-                {/* Patient Entry Card */}
+                {/* Wizard Entry Card */}
                 <motion.div
                   whileHover={{ y: -8, scale: 1.02 }}
-                  className="p-8 rounded-3xl bg-neutral-950/60 border border-white/10 backdrop-blur-xl flex flex-col justify-between space-y-8 cursor-pointer shadow-xl hover:border-indigo-500/30 transition-all group"
+                  className="p-8 rounded-[2rem] glass-panel-magical flex flex-col justify-between space-y-8 cursor-pointer hover:border-amber-400/50 transition-all group"
                   onClick={() => {
                     setAuthRole('patient');
                     setIsAuthModalOpen(true);
                   }}
                 >
                   <div className="space-y-4">
-                    <div className="w-14 h-14 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center group-hover:scale-110 transition-transform">
-                      <Camera className="w-7 h-7" />
+                    <div className="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+                      <Wand2 className="w-7 h-7" />
                     </div>
-                    <h3 className="text-2xl font-bold text-white group-hover:text-indigo-400 transition-colors">Patient Portal</h3>
-                    <p className="text-sm text-neutral-400 leading-relaxed">
-                      Register, scan your face via optical rPPG, analyze lab reports via OCR, and chat with our RAG AI companion.
+                    <h3 className="text-2xl font-bold text-amber-100 group-hover:text-amber-400 transition-colors font-serif">Wizard Portal</h3>
+                    <p className="text-sm text-amber-200/70 leading-relaxed font-sans">
+                      Register your wand, divine your magical pulse via the Orb, decipher potion recipes via OCR, and consult the Portrait Healer.
                     </p>
                   </div>
-                  <div className="flex items-center gap-2 text-indigo-400 font-bold text-sm">
-                    <span>Enter Patient Dashboard</span>
+                  <div className="flex items-center gap-2 text-amber-400 font-bold text-sm font-sans tracking-widest uppercase">
+                    <span>Enter Wizard Dashboard</span>
                     <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                   </div>
                 </motion.div>
 
-                {/* Doctor Entry Card */}
+                {/* Healer Entry Card */}
                 <motion.div
                   whileHover={{ y: -8, scale: 1.02 }}
-                  className="p-8 rounded-3xl bg-neutral-950/60 border border-white/10 backdrop-blur-xl flex flex-col justify-between space-y-8 cursor-pointer shadow-xl hover:border-teal-500/30 transition-all group"
+                  className="p-8 rounded-[2rem] glass-panel-magical flex flex-col justify-between space-y-8 cursor-pointer hover:border-emerald-500/50 transition-all group"
                   onClick={() => {
                     setAuthRole('doctor');
                     setIsAuthModalOpen(true);
                   }}
                 >
                   <div className="space-y-4">
-                    <div className="w-14 h-14 rounded-2xl bg-teal-500/10 border border-teal-500/20 text-teal-400 flex items-center justify-center group-hover:scale-110 transition-transform">
-                      <Stethoscope className="w-7 h-7" />
+                    <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+                      <BookOpen className="w-7 h-7" />
                     </div>
-                    <h3 className="text-2xl font-bold text-white group-hover:text-teal-400 transition-colors">Doctor Portal</h3>
-                    <p className="text-sm text-neutral-400 leading-relaxed">
-                      Access clinical workspace, review patient rosters, track vitals trends, and compile Gemini pre-consultation briefs.
+                    <h3 className="text-2xl font-bold text-amber-100 group-hover:text-emerald-400 transition-colors font-serif">Healer's Ward</h3>
+                    <p className="text-sm text-amber-200/70 leading-relaxed font-sans">
+                      Access St Mungo's clinical workspace, review patient rosters, track magical fluctuations, and compile divination briefs.
                     </p>
                   </div>
-                  <div className="flex items-center gap-2 text-teal-400 font-bold text-sm">
-                    <span>Enter Clinical Workspace</span>
+                  <div className="flex items-center gap-2 text-emerald-400 font-bold text-sm font-sans tracking-widest uppercase">
+                    <span>Enter Healer's Ward</span>
                     <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                   </div>
                 </motion.div>
               </div>
 
-              {/* Bottom HIPAA compliance block */}
-              <div className="flex items-center gap-3 p-4 px-6 rounded-full bg-white/5 border border-white/10 backdrop-blur-md">
-                <Shield className="w-5 h-5 text-neutral-400 animate-pulse" />
-                <span className="text-xs text-neutral-400 font-mono tracking-wider uppercase">HIPAA Compliant & End-to-End Encrypted</span>
+              {/* Bottom Magic compliance block */}
+              <div className="flex items-center gap-3 p-4 px-6 rounded-full glass-panel-magical">
+                <Shield className="w-5 h-5 text-amber-400 animate-pulse" />
+                <span className="text-xs text-amber-200/70 font-sans tracking-[0.2em] uppercase">Ministry of Magic Approved & magically sealed</span>
               </div>
             </motion.div>
           </main>
@@ -330,13 +331,13 @@ export default function App() {
                   exit={{ opacity: 0, y: -15 }}
                   className="space-y-8"
                 >
-                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-white/5">
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-amber-900/30">
                     <div>
-                      <h1 className="text-3xl font-extrabold text-white flex items-center gap-3">
-                        <Stethoscope className="w-8 h-8 text-teal-400" />
-                        <span>Doctor Clinical Console</span>
+                      <h1 className="text-3xl font-extrabold text-amber-100 flex items-center gap-3">
+                        <BookOpen className="w-8 h-8 text-emerald-400" />
+                        <span>St Mungo's Clinical Ward</span>
                       </h1>
-                      <p className="text-sm text-neutral-400 mt-1">Review registered patient vitals and generate Gemini pre-clinical briefing summaries</p>
+                      <p className="text-sm text-amber-200/70 mt-1 font-sans">Review registered wizard vitals and generate magical divination summaries</p>
                     </div>
                   </div>
 
@@ -344,10 +345,10 @@ export default function App() {
                   <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
                     {/* Patients List */}
                     <div className="lg:col-span-4 space-y-4">
-                      <h3 className="text-sm font-extrabold text-neutral-400 uppercase tracking-wider">Patient Roster</h3>
+                      <h3 className="text-sm font-bold text-amber-400 uppercase tracking-widest font-sans">Wizard Roster</h3>
                       {patients.length === 0 ? (
-                        <div className="p-8 text-center rounded-2xl bg-white/5 border border-white/10 border-dashed">
-                          <p className="text-sm text-neutral-500">No patients registered.</p>
+                        <div className="p-8 text-center rounded-2xl glass-panel-magical border-dashed">
+                          <p className="text-sm text-amber-200/50">No wizards registered.</p>
                         </div>
                       ) : (
                         <div className="space-y-3 max-h-[70vh] overflow-y-auto pr-1">
@@ -359,36 +360,36 @@ export default function App() {
                                 onClick={() => handleSelectPatient(pat)}
                                 className={`p-5 rounded-2xl cursor-pointer border transition-all flex flex-col space-y-3 ${
                                   isSelected 
-                                    ? 'bg-teal-500/10 border-teal-500/40 shadow-lg' 
-                                    : 'bg-neutral-900/40 border-white/10 hover:border-teal-500/20'
+                                    ? 'bg-emerald-900/30 border-emerald-500/40 shadow-[0_0_15px_rgba(16,185,129,0.2)]' 
+                                    : 'bg-black/40 border-amber-900/30 hover:border-emerald-500/30'
                                 }`}
                               >
                                 <div className="flex justify-between items-start">
                                   <div>
-                                    <h4 className="font-bold text-white text-base">{pat.name}</h4>
-                                    <span className="text-xs text-neutral-400 block mt-0.5">{pat.email}</span>
+                                    <h4 className="font-bold text-amber-100 text-base">{pat.name}</h4>
+                                    <span className="text-xs text-amber-200/60 block mt-0.5 font-sans">{pat.email}</span>
                                   </div>
-                                  <span className="text-[10px] font-mono font-bold bg-white/10 px-2 py-0.5 rounded-full text-neutral-300">
+                                  <span className="text-[10px] font-sans font-bold bg-amber-900/40 px-2 py-0.5 rounded-full text-amber-300">
                                     Age {pat.age}
                                   </span>
                                 </div>
 
                                 {pat.latestReport ? (
-                                  <div className="flex items-center justify-between pt-2 border-t border-white/5 text-xs">
-                                    <span className="text-neutral-500">Latest Vital:</span>
-                                    <span className="font-mono text-rose-400 font-bold">{pat.latestReport.vitals.heartRate} BPM</span>
+                                  <div className="flex items-center justify-between pt-2 border-t border-amber-900/30 text-xs font-sans">
+                                    <span className="text-amber-200/50">Latest Magic Pulse:</span>
+                                    <span className="font-mono text-red-400 font-bold">{pat.latestReport.vitals.heartRate}</span>
                                     <span className={`font-bold ${
                                       pat.latestReport.conditionStatus === 'Critical' 
-                                        ? 'text-red-400' 
+                                        ? 'text-red-500' 
                                         : pat.latestReport.conditionStatus === 'Warning' 
-                                        ? 'text-amber-400' 
-                                        : 'text-emerald-400'
+                                        ? 'text-amber-500' 
+                                        : 'text-emerald-500'
                                     }`}>
-                                      {pat.latestReport.conditionStatus || 'Optimal'}
+                                      {pat.latestReport.conditionStatus || 'Stable'}
                                     </span>
                                   </div>
                                 ) : (
-                                  <span className="text-xs text-neutral-500 italic block pt-1 border-t border-white/5">No vitals history</span>
+                                  <span className="text-xs text-amber-200/40 italic block pt-1 border-t border-amber-900/30">No divination history</span>
                                 )}
                               </div>
                             );
@@ -401,39 +402,39 @@ export default function App() {
                     <div className="lg:col-span-8 space-y-6">
                       {selectedPatient ? (
                         <div className="space-y-6">
-                          <div className="p-6 rounded-3xl bg-neutral-900/60 border border-white/10 backdrop-blur-md flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                          <div className="p-6 rounded-3xl glass-panel-magical flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                             <div>
-                              <span className="text-[10px] font-bold text-teal-400 uppercase tracking-widest block mb-1">Active Patient</span>
-                              <h2 className="text-2xl font-extrabold text-white">{selectedPatient.name}</h2>
-                              <div className="flex items-center gap-3 text-xs text-neutral-400 mt-1">
+                              <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-[0.2em] block mb-1 font-sans">Active Wizard</span>
+                              <h2 className="text-2xl font-extrabold text-amber-100">{selectedPatient.name}</h2>
+                              <div className="flex items-center gap-3 text-xs text-amber-200/60 mt-1 font-sans">
                                 <span>Age: {selectedPatient.age}</span>
                                 <span>•</span>
-                                <span>Blood: {selectedPatient.bloodGroup || 'O+'}</span>
+                                <span>Blood: {selectedPatient.bloodGroup || 'Pure-blood'}</span>
                               </div>
                             </div>
                             <button
                               onClick={() => handleGenerateSummary()}
                               disabled={isGeneratingSummary}
-                              className="px-5 py-3 rounded-xl bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-500 text-white font-bold text-xs shadow-lg flex items-center gap-2"
+                              className="px-5 py-3 rounded-xl bg-gradient-to-r from-emerald-800 to-emerald-600 hover:from-emerald-700 text-white font-bold text-xs shadow-lg flex items-center gap-2 border border-emerald-500/30"
                             >
                               <Sparkles className="w-4 h-4" />
-                              <span>{isGeneratingSummary ? 'Generating Brief...' : 'Generate AI Brief'}</span>
+                              <span>{isGeneratingSummary ? 'Divining Future...' : 'Generate Prophecy Brief'}</span>
                             </button>
                           </div>
 
                           {clinicalBrief && (
-                            <div className="p-6 rounded-3xl bg-teal-500/5 border border-teal-500/20 space-y-4">
-                              <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                                <Sparkles className="w-5 h-5 text-teal-400" />
-                                <span>{clinicalBrief.summaryTitle || 'Pre-Clinical Brief'}</span>
+                            <div className="p-6 rounded-3xl bg-emerald-950/40 border border-emerald-500/20 space-y-4">
+                              <h3 className="text-lg font-bold text-amber-100 flex items-center gap-2">
+                                <Sparkles className="w-5 h-5 text-emerald-400" />
+                                <span>{clinicalBrief.summaryTitle || 'Healer\'s Prophecy'}</span>
                               </h3>
-                              <p className="text-xs text-neutral-300 leading-relaxed">{clinicalBrief.chiefConcerns?.join(', ')}</p>
+                              <p className="text-sm text-amber-200/80 leading-relaxed font-sans">{clinicalBrief.chiefConcerns?.join(', ')}</p>
                             </div>
                           )}
                         </div>
                       ) : (
-                        <div className="p-12 text-center rounded-3xl bg-neutral-900/40 border border-white/10 border-dashed">
-                          <p className="text-sm text-neutral-400">Select a patient from the roster to view details.</p>
+                        <div className="p-12 text-center rounded-3xl glass-panel-magical border-dashed">
+                          <p className="text-sm text-amber-200/50 font-sans">Select a wizard from the roster to view their magical aura.</p>
                         </div>
                       )}
                     </div>
@@ -450,94 +451,90 @@ export default function App() {
                 >
                   {/* TAB 1: Dashboard & Vitals Overview */}
                   {activeTab === 'dashboard' && (
-                    <div className="space-y-8">
-                      {/* 3D Interactive Facial Structure Mesh Section */}
-                      <FacialMesh3d 
+                     <div className="space-y-8">
+                      {/* Magical Prophecy Orb Section */}
+                      <ProphecyOrb3d 
                         onScanClick={() => setActiveTab('scanner')} 
                       />
 
                       {/* Top Header Cards */}
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div className="p-6 rounded-3xl bg-neutral-900/50 border border-white/10 backdrop-blur-xl flex items-center gap-4">
-                          <div className="p-4 rounded-2xl bg-emerald-500/10 text-emerald-400">
+                        <div className="p-6 rounded-3xl glass-panel-magical flex items-center gap-4">
+                          <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
                             <HeartPulse className="w-8 h-8" />
                           </div>
                           <div>
-                            <span className="text-xs uppercase tracking-wider font-bold text-neutral-500 block">Total Scans</span>
-                            <span className="text-3xl font-extrabold text-white">{healthReports.length}</span>
+                            <span className="text-xs uppercase tracking-widest font-bold text-amber-500 block font-sans">Total Spells Cast</span>
+                            <span className="text-3xl font-extrabold text-amber-100">{healthReports.length}</span>
                           </div>
                         </div>
 
-                        <div className="p-6 rounded-3xl bg-neutral-900/50 border border-white/10 backdrop-blur-xl flex items-center gap-4">
-                          <div className="p-4 rounded-2xl bg-amber-500/10 text-amber-400">
+                        <div className="p-6 rounded-3xl glass-panel-magical flex items-center gap-4">
+                          <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400">
                             <TrendingUp className="w-8 h-8" />
                           </div>
                           <div>
-                            <span className="text-xs uppercase tracking-wider font-bold text-neutral-500 block">Avg Stress Level</span>
-                            <span className="text-xl font-bold text-white">
-                              {healthReports.length > 0 ? healthReports[0].vitals.stressLevel : 'N/A'}
+                            <span className="text-xs uppercase tracking-widest font-bold text-amber-500 block font-sans">Avg Curse Level</span>
+                            <span className="text-xl font-bold text-amber-100">
+                              {healthReports.length > 0 ? healthReports[0].vitals.stressLevel : 'None'}
                             </span>
                           </div>
                         </div>
 
-                        <div className="p-6 rounded-3xl bg-neutral-900/50 border border-white/10 backdrop-blur-xl flex items-center gap-4">
+                        <div className="p-6 rounded-3xl glass-panel-magical flex items-center gap-4">
                           <div className="w-full flex justify-between items-center">
                             <div>
-                              <span className="text-xs uppercase tracking-wider font-bold text-neutral-500 block mb-1">Face rPPG Scanner</span>
-                              <span className="text-xs text-neutral-400">Optical camera checkup</span>
+                              <span className="text-xs uppercase tracking-widest font-bold text-amber-500 block mb-1 font-sans">Gaze into the Orb</span>
+                              <span className="text-xs text-amber-200/60 font-sans">Magical aura checkup</span>
                             </div>
                             <button
                               onClick={() => setActiveTab('scanner')}
-                              className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs transition-all shadow-lg shadow-indigo-500/20"
+                              className="px-4 py-2.5 rounded-xl bg-amber-700 hover:bg-amber-600 text-amber-100 font-bold text-xs transition-all shadow-[0_0_15px_rgba(245,158,11,0.3)] border border-amber-500/30"
                             >
-                              Start Scan
+                              Cast Scan
                             </button>
                           </div>
                         </div>
                       </div>
 
-                      {/* Main History & Security layout */}
+                      {/* Main History layout */}
                       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
                         <div className="lg:col-span-7 space-y-4">
-                          <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                            <Activity className="w-5 h-5 text-indigo-400" />
-                            <span>Biometric Scan History</span>
+                          <h2 className="text-xl font-bold text-amber-100 flex items-center gap-2">
+                            <History className="w-5 h-5 text-amber-400" />
+                            <span>Book of Past Prophecies</span>
                           </h2>
 
                           {healthReports.length === 0 ? (
-                            <div className="p-12 text-center rounded-3xl bg-white/5 border border-white/5 border-dashed">
-                              <Activity className="w-12 h-12 text-neutral-600 mx-auto mb-4" />
-                              <p className="text-neutral-400 text-xs">No scans found. Use the Face Scanner tab to run your first wellness checkup.</p>
+                            <div className="p-12 text-center rounded-3xl glass-panel-magical border-dashed">
+                              <BookOpen className="w-12 h-12 text-amber-900/50 mx-auto mb-4" />
+                              <p className="text-amber-200/50 text-xs font-sans">No prophecies found. Gaze into the Prophecy Orb to reveal your magical vitals.</p>
                             </div>
                           ) : (
                             <div className="space-y-4">
                               {healthReports.map((report) => (
-                                <div key={report._id} className="p-5 rounded-2xl bg-neutral-900/50 border border-white/10 hover:border-indigo-500/30 transition-all flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                                <div key={report._id} className="p-5 rounded-2xl glass-panel-magical hover:border-amber-400/50 transition-all flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                                   <div>
-                                    <span className="text-[10px] font-mono text-indigo-400 bg-indigo-500/10 px-2.5 py-1 rounded-full border border-indigo-500/20 mb-2 inline-block">
+                                    <span className="text-[10px] font-sans tracking-widest text-amber-400 bg-amber-900/30 px-2.5 py-1 rounded-full border border-amber-500/20 mb-2 inline-block">
                                       {new Date(report.date).toLocaleString()}
                                     </span>
-                                    <h3 className="text-base font-bold text-white mt-1">Overall Score: {report.vitals.overallWellnessIndex}</h3>
-                                    <p className="text-xs text-neutral-400 mt-0.5">
-                                      Condition: <span className={`font-bold ${report.conditionStatus === 'Critical' ? 'text-red-400' : report.conditionStatus === 'Warning' ? 'text-amber-400' : 'text-emerald-400'}`}>{report.conditionStatus || 'N/A'}</span>
+                                    <h3 className="text-base font-bold text-amber-100 mt-1">Purity Score: {report.vitals.overallWellnessIndex}</h3>
+                                    <p className="text-xs text-amber-200/60 mt-0.5 font-sans">
+                                      Aura Status: <span className={`font-bold ${report.conditionStatus === 'Critical' ? 'text-red-500' : report.conditionStatus === 'Warning' ? 'text-amber-500' : 'text-emerald-500'}`}>{report.conditionStatus || 'Stable'}</span>
                                     </p>
                                   </div>
-                                  <div className="flex flex-wrap gap-3 text-xs mt-2 lg:mt-0">
-                                    <div className="bg-white/5 px-3 py-1.5 rounded-lg text-center">
-                                      <span className="block text-[8px] text-neutral-500 font-bold uppercase">Heart Rate</span>
-                                      <span className="font-mono text-rose-400 font-bold">{report.vitals.heartRate} BPM</span>
+                                  <div className="flex flex-wrap gap-3 text-xs mt-2 lg:mt-0 font-sans">
+                                    <div className="bg-black/40 px-3 py-1.5 rounded-lg text-center border border-amber-900/20">
+                                      <span className="block text-[8px] text-amber-500 font-bold uppercase tracking-widest">Magic Pulse</span>
+                                      <span className="font-mono text-red-400 font-bold">{report.vitals.heartRate}</span>
                                     </div>
-                                    <div className="bg-white/5 px-3 py-1.5 rounded-lg text-center">
-                                      <span className="block text-[8px] text-neutral-500 font-bold uppercase">Resp Rate</span>
+                                    <div className="bg-black/40 px-3 py-1.5 rounded-lg text-center border border-amber-900/20">
+                                      <span className="block text-[8px] text-amber-500 font-bold uppercase tracking-widest">Mana Rate</span>
                                       <span className="font-mono text-cyan-400 font-bold">{report.vitals.respiratoryRate || '--'}</span>
                                     </div>
-                                    <div className="bg-white/5 px-3 py-1.5 rounded-lg text-center">
-                                      <span className="block text-[8px] text-neutral-500 font-bold uppercase">HRV</span>
+                                    <div className="bg-black/40 px-3 py-1.5 rounded-lg text-center border border-amber-900/20">
+                                      <span className="block text-[8px] text-amber-500 font-bold uppercase tracking-widest">Resonance</span>
                                       <span className="font-mono text-purple-400 font-bold">{report.vitals.hrv || '--'} ms</span>
-                                    </div>
-                                    <div className="bg-white/5 px-3 py-1.5 rounded-lg text-center">
-                                      <span className="block text-[8px] text-neutral-500 font-bold uppercase">Stress</span>
-                                      <span className="font-mono text-amber-400 font-bold">{report.vitals.stressLevel}</span>
                                     </div>
                                   </div>
                                 </div>
@@ -547,13 +544,13 @@ export default function App() {
                         </div>
 
                         <div className="lg:col-span-5">
-                          <div className="p-6 rounded-3xl bg-neutral-900/50 border border-white/10 space-y-4">
-                            <div className="w-10 h-10 rounded-2xl bg-blue-500/10 text-blue-400 flex items-center justify-center mb-4">
+                          <div className="p-6 rounded-3xl glass-panel-magical space-y-4">
+                            <div className="w-10 h-10 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-400 flex items-center justify-center mb-4">
                               <Shield className="w-5 h-5" />
                             </div>
-                            <h3 className="text-base font-bold text-white">Clinical Grade Privacy</h3>
-                            <p className="text-xs text-neutral-400 leading-relaxed">
-                              Facial telemetry is analyzed directly via FFmpeg signalstats. No raw video files are retained beyond the micro-vascular frame processing.
+                            <h3 className="text-base font-bold text-amber-100">Unbreakable Vow of Privacy</h3>
+                            <p className="text-xs text-amber-200/70 leading-relaxed font-sans">
+                              Your magical essence is analyzed directly via encrypted wards. No memories or visual traces are retained in the pensieve beyond the immediate divination.
                             </p>
                           </div>
                         </div>
@@ -584,40 +581,40 @@ export default function App() {
                   {/* TAB 5: Doctor Consultation Brief Prep */}
                   {activeTab === 'brief' && (
                     <div className="space-y-6">
-                      <div className="p-6 rounded-3xl bg-neutral-900/60 border border-white/10 backdrop-blur-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                      <div className="p-6 rounded-3xl glass-panel-magical flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                         <div className="flex items-center gap-4">
-                          <div className="p-3.5 rounded-2xl bg-blue-500/10 border border-blue-500/20 text-blue-400">
-                            <Stethoscope className="w-6 h-6" />
+                          <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400">
+                            <BookOpen className="w-6 h-6" />
                           </div>
                           <div>
-                            <h2 className="text-xl font-bold text-white">Doctor Consultation Brief Prep</h2>
-                            <p className="text-xs text-neutral-400 mt-0.5">Generate a clinical brief of your recent vitals history to take to your next doctor visit</p>
+                            <h2 className="text-xl font-bold text-amber-100">Healer Consultation Prep</h2>
+                            <p className="text-xs text-amber-200/70 mt-0.5 font-sans">Generate a magical brief of your recent aura history for St Mungo's</p>
                           </div>
                         </div>
                         <button
-                          onClick={() => handleGenerateSummary({ _id: user.id, name: user.name, email: user.email, age: user.age, bloodGroup: 'O+', latestReport: null })}
+                          onClick={() => handleGenerateSummary({ _id: user.id, name: user.name, email: user.email, age: user.age, bloodGroup: 'Pure-blood', latestReport: null })}
                           disabled={isGeneratingSummary}
-                          className="px-5 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-xs font-bold shadow-lg flex items-center gap-2 disabled:opacity-50"
+                          className="px-5 py-3 rounded-xl bg-gradient-to-r from-amber-700 to-amber-900 hover:from-amber-600 border border-amber-500/40 text-amber-100 text-xs font-bold shadow-[0_0_15px_rgba(245,158,11,0.3)] flex items-center gap-2 disabled:opacity-50 font-serif"
                         >
                           <Sparkles className="w-4 h-4" />
-                          <span>{isGeneratingSummary ? 'Compiling Brief...' : 'Compile My Clinical Brief'}</span>
+                          <span>{isGeneratingSummary ? 'Transcribing...' : 'Compile My Prophecy Brief'}</span>
                         </button>
                       </div>
 
                       {clinicalBrief && (
-                        <div className="p-6 rounded-3xl bg-neutral-900/60 border border-white/10 space-y-6">
-                          <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                            <Sparkles className="w-5 h-5 text-blue-400" />
+                        <div className="p-6 rounded-3xl glass-panel-magical space-y-6">
+                          <h3 className="text-lg font-bold text-amber-100 flex items-center gap-2">
+                            <Sparkles className="w-5 h-5 text-amber-400" />
                             <span>{clinicalBrief.summaryTitle}</span>
                           </h3>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="p-4 rounded-2xl bg-white/5 space-y-2">
-                              <span className="text-[10px] font-bold text-blue-400 uppercase">Chief Concerns</span>
-                              <p className="text-xs text-neutral-300">{clinicalBrief.chiefConcerns?.join(', ')}</p>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 font-sans">
+                            <div className="p-4 rounded-2xl bg-black/40 border border-amber-900/30 space-y-2">
+                              <span className="text-[10px] font-bold text-amber-500 uppercase tracking-widest">Dark Marks & Concerns</span>
+                              <p className="text-xs text-amber-200/80">{clinicalBrief.chiefConcerns?.join(', ')}</p>
                             </div>
-                            <div className="p-4 rounded-2xl bg-white/5 space-y-2">
-                              <span className="text-[10px] font-bold text-blue-400 uppercase">Suggested Doctor Questions</span>
-                              <ul className="text-xs text-neutral-300 list-disc list-inside space-y-1">
+                            <div className="p-4 rounded-2xl bg-black/40 border border-amber-900/30 space-y-2">
+                              <span className="text-[10px] font-bold text-amber-500 uppercase tracking-widest">Questions for the Healer</span>
+                              <ul className="text-xs text-amber-200/80 list-disc list-inside space-y-1">
                                 {clinicalBrief.targetedQuestions?.map((q: string, i: number) => (
                                   <li key={i}>{q}</li>
                                 ))}

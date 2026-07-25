@@ -25,172 +25,85 @@ export const HealthBg3d: React.FC = () => {
     const handleResize = () => {
       width = canvas.width = window.innerWidth;
       height = canvas.height = window.innerHeight;
+      initStars();
     };
 
     window.addEventListener("mousemove", handleMouseMove);
     window.addEventListener("resize", handleResize);
 
-    // DNA Helix properties
-    const nodesCount = 42;
-    const speed = 0.008;
-    let angle = 0;
+    // Magical Stars properties
+    const starsCount = 150;
+    let stars: { x: number; y: number; z: number; size: number; alpha: number, speed: number }[] = [];
 
-    const drawDnaHelix = () => {
+    const initStars = () => {
+      stars = [];
+      for (let i = 0; i < starsCount; i++) {
+        stars.push({
+          x: Math.random() * width - width / 2,
+          y: Math.random() * height - height / 2,
+          z: Math.random() * 1000,
+          size: Math.random() * 2 + 0.5,
+          alpha: Math.random(),
+          speed: Math.random() * 0.5 + 0.2
+        });
+      }
+    };
+    initStars();
+
+    const drawMagicalNight = () => {
       ctx.clearRect(0, 0, width, height);
 
-      // Add a subtle grid glow in the background
-      ctx.strokeStyle = "rgba(99, 102, 241, 0.03)";
-      ctx.lineWidth = 1;
-      const gridSize = 60;
-      for (let x = 0; x < width; x += gridSize) {
-        ctx.beginPath();
-        ctx.moveTo(x, 0);
-        ctx.lineTo(x, height);
-        ctx.stroke();
-      }
-      for (let y = 0; y < height; y += gridSize) {
-        ctx.beginPath();
-        ctx.moveTo(0, y);
-        ctx.lineTo(width, y);
-        ctx.stroke();
-      }
-
-      // Smoothly interpolate mouse coordinates for organic motion response
+      // Smoothly interpolate mouse coordinates for parallax
       mouse.x += (mouse.targetX - mouse.x) * 0.05;
       mouse.y += (mouse.targetY - mouse.y) * 0.05;
 
-      const centerX = width / 2 + (mouse.x - width / 2) * 0.15;
-      const centerY = height / 2 + (mouse.y - height / 2) * 0.15;
+      const centerX = width / 2;
+      const centerY = height / 2;
+      
+      const mouseOffsetX = (mouse.x - centerX) * 0.05;
+      const mouseOffsetY = (mouse.y - centerY) * 0.05;
 
-      angle += speed;
+      stars.forEach((star) => {
+        // Move stars closer (Z-axis)
+        star.z -= star.speed * 2;
+        if (star.z <= 0) {
+          star.x = Math.random() * width - width / 2;
+          star.y = Math.random() * height - height / 2;
+          star.z = 1000;
+        }
 
-      const pointsA: { x: number; y: number; z: number; size: number; alpha: number }[] = [];
-      const pointsB: { x: number; y: number; z: number; size: number; alpha: number }[] = [];
-
-      // Generate 3D coordinates for two helix strands
-      for (let i = 0; i < nodesCount; i++) {
-        // Vertical spacing along the helix length
-        const t = (i / nodesCount) - 0.5;
-        const yOffset = t * height * 1.1;
-
-        // Helix rotation offsets
-        const helixAngle = angle + t * Math.PI * 4;
-        const radius = 90 + Math.sin(angle * 0.5 + t * Math.PI) * 20;
-
-        // 3D coordinates (rotation in X-Z plane)
-        const x3d_A = Math.cos(helixAngle) * radius;
-        const z3d_A = Math.sin(helixAngle) * radius;
-
-        const x3d_B = Math.cos(helixAngle + Math.PI) * radius;
-        const z3d_B = Math.sin(helixAngle + Math.PI) * radius;
-
-        // Simple 3D perspective projection
-        const fov = 400; // Focal length
-        const cameraDistance = 300;
-
-        // Perspective scale factors
-        const scaleA = fov / (fov + z3d_A + cameraDistance);
-        const scaleB = fov / (fov + z3d_B + cameraDistance);
-
-        // Project to 2D canvas coordinates
-        // Rotate slightly on the screen plane for elegance
-        const angleScreen = -0.4;
-        const cosS = Math.cos(angleScreen);
-        const sinS = Math.sin(angleScreen);
-
-        const rxA = x3d_A * cosS - yOffset * sinS;
-        const ryA = x3d_A * sinS + yOffset * cosS;
-
-        const rxB = x3d_B * cosS - yOffset * sinS;
-        const ryB = x3d_B * sinS + yOffset * cosS;
-
-        pointsA.push({
-          x: centerX + rxA * scaleA,
-          y: centerY + ryA * scaleA,
-          z: z3d_A,
-          size: 5.5 * scaleA,
-          alpha: Math.max(0.1, Math.min(1, 0.7 - z3d_A / (radius * 2))),
-        });
-
-        pointsB.push({
-          x: centerX + rxB * scaleB,
-          y: centerY + ryB * scaleB,
-          z: z3d_B,
-          size: 5.5 * scaleB,
-          alpha: Math.max(0.1, Math.min(1, 0.7 - z3d_B / (radius * 2))),
-        });
-      }
-
-      // 1. Draw connection rungs (bars) between the two strands
-      for (let i = 0; i < nodesCount; i++) {
-        const pA = pointsA[i];
-        const pB = pointsB[i];
-
-        // Draw bar if it is in view boundaries
-        const grad = ctx.createLinearGradient(pA.x, pA.y, pB.x, pB.y);
+        // 3D Perspective Projection
+        const fov = 400;
+        const scale = fov / (fov + star.z);
         
-        // Dynamic colors: Indigo/Purple/Cyan base on node Z position
-        const alpha = Math.min(pA.alpha, pB.alpha) * 0.25;
-        grad.addColorStop(0, `rgba(99, 102, 241, ${alpha})`); // Indigo
-        grad.addColorStop(0.5, `rgba(168, 85, 247, ${alpha * 0.6})`); // Purple
-        grad.addColorStop(1, `rgba(45, 212, 191, ${alpha})`); // Teal
+        const px = centerX + star.x * scale - mouseOffsetX * (1000 - star.z) * 0.001;
+        const py = centerY + star.y * scale - mouseOffsetY * (1000 - star.z) * 0.001;
+        
+        const currentSize = star.size * scale * 2;
+        const currentAlpha = Math.min(1, Math.max(0.1, 1 - (star.z / 1000))) * (0.5 + Math.sin(Date.now() * 0.002 * star.speed) * 0.5);
 
-        ctx.strokeStyle = grad;
-        ctx.lineWidth = 1.5 * ((pA.size + pB.size) / 11);
-        ctx.beginPath();
-        ctx.moveTo(pA.x, pA.y);
-        ctx.lineTo(pB.x, pB.y);
-        ctx.stroke();
-      }
-
-      // 2. Draw outer strands curves
-      ctx.lineWidth = 2.5;
-      for (let i = 0; i < nodesCount - 1; i++) {
-        const drawSegment = (pts: typeof pointsA, colorRgb: string) => {
-          const p1 = pts[i];
-          const p2 = pts[i + 1];
-          const alpha = (p1.alpha + p2.alpha) * 0.15;
-          ctx.strokeStyle = `rgba(${colorRgb}, ${alpha})`;
-          ctx.beginPath();
-          ctx.moveTo(p1.x, p1.y);
-          ctx.lineTo(p2.x, p2.y);
-          ctx.stroke();
-        };
-
-        drawSegment(pointsA, "99, 102, 241"); // Indigo strand
-        drawSegment(pointsB, "45, 212, 191"); // Teal strand
-      }
-
-      // 3. Draw nodes (glowing endpoints)
-      // Sort nodes by Z value (depth sorting) to render correct overlapping
-      const allNodes = [
-        ...pointsA.map((p) => ({ ...p, color: "99, 102, 241" })), // Indigo
-        ...pointsB.map((p) => ({ ...p, color: "45, 212, 191" })), // Teal
-      ].sort((a, b) => b.z - a.z);
-
-      allNodes.forEach((node) => {
-        const glowRad = node.size * 2.2;
-        const radGrad = ctx.createRadialGradient(node.x, node.y, 0, node.x, node.y, glowRad);
-        radGrad.addColorStop(0, `rgba(${node.color}, ${node.alpha})`);
-        radGrad.addColorStop(0.3, `rgba(${node.color}, ${node.alpha * 0.4})`);
-        radGrad.addColorStop(1, `rgba(${node.color}, 0)`);
+        // Draw glowing star
+        const radGrad = ctx.createRadialGradient(px, py, 0, px, py, currentSize * 3);
+        const goldAlpha = currentAlpha * 0.8;
+        radGrad.addColorStop(0, `rgba(251, 191, 36, ${currentAlpha})`); // Amber/Gold core
+        radGrad.addColorStop(0.2, `rgba(217, 119, 6, ${goldAlpha})`);
+        radGrad.addColorStop(1, `rgba(180, 83, 9, 0)`);
 
         ctx.fillStyle = radGrad;
         ctx.beginPath();
-        ctx.arc(node.x, node.y, glowRad, 0, Math.PI * 2);
+        ctx.arc(px, py, currentSize * 3, 0, Math.PI * 2);
         ctx.fill();
 
-        // Core bright center
-        ctx.fillStyle = `rgba(255, 255, 255, ${node.alpha * 0.95})`;
+        ctx.fillStyle = `rgba(255, 255, 255, ${currentAlpha * 0.9})`;
         ctx.beginPath();
-        ctx.arc(node.x, node.y, node.size * 0.5, 0, Math.PI * 2);
+        ctx.arc(px, py, currentSize * 0.3, 0, Math.PI * 2);
         ctx.fill();
       });
 
-      animationFrameId = requestAnimationFrame(drawDnaHelix);
+      animationFrameId = requestAnimationFrame(drawMagicalNight);
     };
 
-    drawDnaHelix();
+    drawMagicalNight();
 
     return () => {
       cancelAnimationFrame(animationFrameId);
