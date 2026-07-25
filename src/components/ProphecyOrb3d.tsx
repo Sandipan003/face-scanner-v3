@@ -258,10 +258,14 @@ export const ProphecyOrb3d: React.FC<ProphecyOrbProps> = ({ onScanClick }) => {
         </div>
       </div>
 
-      <div 
-        ref={mountRef} 
-        className="w-full h-[360px] sm:h-[420px] cursor-grab active:cursor-grabbing relative flex items-center justify-center rounded-2xl bg-black/40 border border-amber-900/30 shadow-inner overflow-hidden"
-      >
+      <div className="w-full h-[360px] sm:h-[420px] relative rounded-2xl bg-black/40 border border-amber-900/30 shadow-inner overflow-hidden">
+        {/* Three.js Canvas Container */}
+        <div 
+          ref={mountRef} 
+          className="absolute inset-0 cursor-grab active:cursor-grabbing flex items-center justify-center"
+        />
+
+        {/* UI Overlays */}
         <div className="absolute top-4 left-4 z-20 flex items-center gap-2 bg-black/60 backdrop-blur-md px-4 py-2 rounded-full border border-amber-500/20 text-xs text-amber-200 pointer-events-none">
           <Wand2 className="w-4 h-4 text-amber-400" />
           <span className="font-sans tracking-widest uppercase">Gaze into the Orb</span>
