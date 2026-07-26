@@ -177,18 +177,19 @@ app.post("/api/user/award-points", authMiddleware, async (req: AuthRequest, res)
     const { amount, reason } = req.body;
     if (!amount || typeof amount !== 'number') return res.status(400).json({ error: "Invalid amount" });
     
-    const user = await User.findById(req.user?.userId);
+    const user = await User.findByIdAndUpdate(
+      req.user?.userId,
+      {
+        $inc: { points: amount },
+        $push: { walletHistory: { amount, reason, date: new Date() } }
+      },
+      { new: true }
+    );
+
     if (!user) {
       console.log("User not found in DB for ID:", req.user?.userId);
       return res.status(404).json({ error: "User not found" });
     }
-
-    user.points = (user.points || 0) + amount;
-    if (!user.walletHistory) {
-      user.walletHistory = [];
-    }
-    user.walletHistory.push({ amount, reason, date: new Date() });
-    await user.save();
 
     console.log("Points successfully awarded! New points:", user.points);
     res.json({ success: true, points: user.points, history: user.walletHistory });
