@@ -75,9 +75,9 @@ export const MetricsDashboard = ({ metrics, isRunning, timeLeft }: MetricsProps)
           color="border-cyan-500/20 bg-cyan-500/5"
         />
         <MetricCard 
-          title="Blood Pressure Changes" 
-          value={metrics?.cardio?.bloodPressure ? `${Math.round(metrics.cardio.bloodPressure.systolic)}/${Math.round(metrics.cardio.bloodPressure.diastolic)}` : '--'} 
-          unit="mmHg" 
+          title="Heart Rate Variability" 
+          value={hrv} 
+          unit="ms" 
           icon={<Activity className="w-5 h-5 text-violet-500" />} 
           color="border-violet-500/20 bg-violet-500/5"
         />

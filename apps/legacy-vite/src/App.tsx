@@ -99,50 +99,73 @@ export default function App() {
     }
   };
 
-  // Generate Doctor Consultation Summary via Gemini
+  // Generate Healer Consultation Brief via Groq (called directly from browser)
   const handleGenerateSummary = async (targetPatient?: PatientWithStats) => {
     const p = targetPatient || selectedPatient;
     if (!p) return;
     setIsGeneratingSummary(true);
     setClinicalBrief(null);
-    const token = localStorage.getItem('token');
-    try {
-      const payload = {
-        patientProfile: {
-          name: p.name,
-          age: p.age,
-          bloodGroup: p.bloodGroup || 'O+',
-          chronicConditions: ['None recorded'],
-          allergies: ['None recorded'],
-          currentMedications: []
-        },
-        timelineEvents: (selectedPatientReports.length > 0 ? selectedPatientReports : healthReports).slice(0, 3).map(r => ({
-          title: `Biometric screening session`,
-          date: new Date(r.date).toLocaleDateString(),
-          description: `Vitals index: ${r.vitals.overallWellnessIndex}, status: ${r.conditionStatus || 'Normal'}`
-        })),
-        recentLabResults: (selectedPatientReports.length > 0 ? selectedPatientReports : healthReports).map(r => ({
-          marker: 'Heart Rate (rPPG)',
-          value: `${r.vitals.heartRate} BPM`,
-          status: r.conditionStatus || 'Normal'
-        })),
-        specificConcerns: `Pre-clinical brief for ${p.name}`
-      };
 
-      const res = await fetch('/api/doctor-summary', {
+    const groqApiKey = import.meta.env.VITE_GROQ_API_KEY;
+    if (!groqApiKey) {
+      console.error('[Brief] No VITE_GROQ_API_KEY in .env');
+      setIsGeneratingSummary(false);
+      return;
+    }
+
+    const reports = (selectedPatientReports.length > 0 ? selectedPatientReports : healthReports).slice(0, 5);
+    const vitalsHistory = reports.map(r => ({
+      date: new Date(r.date).toLocaleDateString(),
+      heartRate: r.vitals.heartRate,
+      status: r.conditionStatus || 'Normal',
+      wellnessScore: r.vitals.overallWellnessScore || r.vitals.overallWellnessIndex || 'N/A',
+      stressLevel: r.vitals.stressLevel || 'N/A',
+      sleepQuality: r.vitals.sleepQualityEstimation || 'N/A',
+      energyScore: r.vitals.energyScore || 'N/A',
+    }));
+
+    const prompt = `You are a senior medical AI generating a pre-consultation health brief. Analyze the patient data and respond with ONLY a flat JSON object — no markdown, no wrapper keys.
+
+PATIENT:
+Name: ${p.name}, Age: ${p.age}, Blood Group: ${p.bloodGroup || 'O+'}
+
+RECENT BIOMETRIC HISTORY (${reports.length} sessions):
+${JSON.stringify(vitalsHistory, null, 2)}
+
+Respond with exactly this JSON structure (fill in realistic values):
+{"summaryTitle":"Pre-Consultation Health Brief","dateGenerated":"${new Date().toLocaleDateString()}","overallHealthStatus":"Stable/At Risk/Needs Attention","chiefConcerns":["Concern 1","Concern 2","Concern 3"],"positiveFindings":["Good finding 1","Good finding 2"],"vitalsOverview":{"bloodGroup":"${p.bloodGroup || 'O+'}","avgHeartRate":"72 BPM","avgWellnessScore":"80/100","avgEnergyLevel":"Good","sleepTrend":"Consistent","stressPattern":"Low"},"labHighlights":[{"marker":"Heart Rate","baseline":"--","current":"${reports[0]?.vitals?.heartRate || '--'} BPM","trend":"Stable"},{"marker":"Wellness Score","baseline":"--","current":"${reports[0]?.vitals?.overallWellnessScore || '--'}/100","trend":"Improving"}],"targetedQuestions":["Question for your doctor 1?","Question for your doctor 2?","Question for your doctor 3?"],"recommendedTests":["Recommended test 1","Recommended test 2"],"lifestyleNotes":"A brief personalized lifestyle recommendation based on the biometric history."}`;
+
+    try {
+      console.log('[Brief] Calling Groq for consultation brief...');
+      const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${groqApiKey}`
         },
-        body: JSON.stringify(payload)
+        body: JSON.stringify({
+          model: 'llama-3.3-70b-versatile',
+          messages: [
+            { role: 'system', content: 'You are a senior medical AI. Respond ONLY with a flat JSON object. Never use markdown or wrapper keys.' },
+            { role: 'user', content: prompt }
+          ],
+          response_format: { type: 'json_object' },
+          temperature: 0.3,
+          max_tokens: 1000
+        })
       });
+
+      if (!res.ok) throw new Error(`Groq ${res.status}: ${await res.text()}`);
+
       const data = await res.json();
-      if (data.success) {
-        setClinicalBrief(data);
-      }
+      let parsed = JSON.parse(data.choices?.[0]?.message?.content || '{}');
+      const keys = Object.keys(parsed);
+      if (keys.length === 1 && typeof parsed[keys[0]] === 'object') parsed = parsed[keys[0]];
+
+      console.log('[Brief] Brief ready:', parsed);
+      setClinicalBrief(parsed);
     } catch (err) {
-      console.error('Failed to generate summary brief', err);
+      console.error('[Brief] Failed:', err);
     } finally {
       setIsGeneratingSummary(false);
     }
@@ -592,6 +615,7 @@ export default function App() {
                   {/* TAB 5: Doctor Consultation Brief Prep */}
                   {activeTab === 'brief' && (
                     <div className="space-y-6">
+                      {/* Header Card */}
                       <div className="p-6 rounded-3xl glass-panel-magical flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                         <div className="flex items-center gap-4">
                           <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400">
@@ -599,38 +623,163 @@ export default function App() {
                           </div>
                           <div>
                             <h2 className="text-xl font-bold text-amber-100">Healer Consultation Prep</h2>
-                            <p className="text-xs text-amber-200/70 mt-0.5 font-sans">Generate a magical brief of your recent aura history for St Mungo's</p>
+                            <p className="text-xs text-amber-200/70 mt-0.5 font-sans">Generate an AI-powered health brief for your next medical appointment</p>
                           </div>
                         </div>
                         <button
-                          onClick={() => handleGenerateSummary({ _id: user.id, name: user.name, email: user.email, age: user.age, bloodGroup: 'Pure-blood', latestReport: null })}
+                          onClick={() => handleGenerateSummary({ _id: user.id, name: user.name, email: user.email, age: user.age, bloodGroup: 'O+', latestReport: healthReports[0] || null })}
                           disabled={isGeneratingSummary}
-                          className="px-5 py-3 rounded-xl bg-gradient-to-r from-amber-700 to-amber-900 hover:from-amber-600 border border-amber-500/40 text-amber-100 text-xs font-bold shadow-[0_0_15px_rgba(245,158,11,0.3)] flex items-center gap-2 disabled:opacity-50 font-serif"
+                          className="px-5 py-3 rounded-xl bg-gradient-to-r from-amber-700 to-amber-900 hover:from-amber-600 hover:to-amber-800 border border-amber-500/40 text-amber-100 text-sm font-bold shadow-[0_0_20px_rgba(245,158,11,0.3)] hover:shadow-[0_0_30px_rgba(245,158,11,0.4)] flex items-center gap-2 disabled:opacity-50 transition-all font-sans"
                         >
-                          <Sparkles className="w-4 h-4" />
-                          <span>{isGeneratingSummary ? 'Transcribing...' : 'Compile My Prophecy Brief'}</span>
+                          {isGeneratingSummary ? (
+                            <><Activity className="w-4 h-4 animate-spin" />Generating...</>
+                          ) : (
+                            <><Sparkles className="w-4 h-4" />Compile My Prophecy Brief</>
+                          )}
                         </button>
                       </div>
 
-                      {clinicalBrief && (
-                        <div className="p-6 rounded-3xl glass-panel-magical space-y-6">
-                          <h3 className="text-lg font-bold text-amber-100 flex items-center gap-2">
-                            <Sparkles className="w-5 h-5 text-amber-400" />
-                            <span>{clinicalBrief.summaryTitle}</span>
-                          </h3>
+                      {/* No reports notice */}
+                      {!isGeneratingSummary && !clinicalBrief && healthReports.length === 0 && (
+                        <div className="p-8 rounded-3xl glass-panel-magical text-center border-dashed">
+                          <Camera className="w-10 h-10 text-amber-500/40 mx-auto mb-3" />
+                          <p className="text-amber-200/60 font-sans text-sm">Complete a Prophecy Orb scan first to generate your health brief.</p>
+                          <button onClick={() => setActiveTab('scanner')} className="mt-4 px-4 py-2 rounded-xl bg-amber-700/30 border border-amber-500/30 text-amber-300 text-xs font-bold font-sans hover:bg-amber-700/50 transition-all">
+                            Go to Prophecy Orb
+                          </button>
+                        </div>
+                      )}
+
+                      {/* Loading state */}
+                      {isGeneratingSummary && (
+                        <div className="p-10 rounded-3xl glass-panel-magical text-center">
+                          <div className="w-16 h-16 rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center mx-auto mb-4">
+                            <Sparkles className="w-8 h-8 text-amber-400 animate-pulse" />
+                          </div>
+                          <p className="text-amber-200 font-serif text-lg font-bold">Consulting the Oracle...</p>
+                          <p className="text-amber-200/50 font-sans text-sm mt-2">Analyzing your biometric history and crafting your health brief.</p>
+                        </div>
+                      )}
+
+                      {/* Brief Results */}
+                      {clinicalBrief && !isGeneratingSummary && (
+                        <div className="space-y-4">
+                          {/* Brief Title & Status */}
+                          <div className="p-5 rounded-2xl bg-gradient-to-br from-amber-900/30 to-amber-800/10 border border-amber-500/30 flex items-center justify-between">
+                            <div>
+                              <h3 className="text-lg font-bold text-amber-100 font-serif">{clinicalBrief.summaryTitle || 'Health Brief'}</h3>
+                              <p className="text-xs text-amber-200/60 font-sans mt-0.5">Generated: {clinicalBrief.dateGenerated}</p>
+                            </div>
+                            <span className={`px-3 py-1 rounded-full text-xs font-bold font-sans border ${
+                              clinicalBrief.overallHealthStatus === 'Stable' ? 'bg-emerald-900/40 text-emerald-300 border-emerald-500/40' :
+                              clinicalBrief.overallHealthStatus === 'At Risk' ? 'bg-amber-900/40 text-amber-300 border-amber-500/40' :
+                              'bg-red-900/40 text-red-300 border-red-500/40'
+                            }`}>
+                              {clinicalBrief.overallHealthStatus || 'Analyzed'}
+                            </span>
+                          </div>
+
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 font-sans">
-                            <div className="p-4 rounded-2xl bg-black/40 border border-amber-900/30 space-y-2">
-                              <span className="text-[10px] font-bold text-amber-500 uppercase tracking-widest">Dark Marks & Concerns</span>
-                              <p className="text-xs text-amber-200/80">{clinicalBrief.chiefConcerns?.join(', ')}</p>
-                            </div>
-                            <div className="p-4 rounded-2xl bg-black/40 border border-amber-900/30 space-y-2">
-                              <span className="text-[10px] font-bold text-amber-500 uppercase tracking-widest">Questions for the Healer</span>
-                              <ul className="text-xs text-amber-200/80 list-disc list-inside space-y-1">
-                                {clinicalBrief.targetedQuestions?.map((q: string, i: number) => (
-                                  <li key={i}>{q}</li>
+                            {/* Chief Concerns */}
+                            {clinicalBrief.chiefConcerns?.length > 0 && (
+                              <div className="p-5 rounded-2xl bg-red-900/10 border border-red-500/20">
+                                <span className="text-[10px] font-bold text-red-400 uppercase tracking-widest block mb-3">⚠ Areas to Discuss</span>
+                                <ul className="space-y-2">
+                                  {clinicalBrief.chiefConcerns.map((c: string, i: number) => (
+                                    <li key={i} className="text-xs text-amber-200/80 flex items-start gap-2">
+                                      <AlertTriangle className="w-3 h-3 text-red-400 mt-0.5 flex-shrink-0" />{c}
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+
+                            {/* Positive Findings */}
+                            {clinicalBrief.positiveFindings?.length > 0 && (
+                              <div className="p-5 rounded-2xl bg-emerald-900/10 border border-emerald-500/20">
+                                <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest block mb-3">✓ Positive Findings</span>
+                                <ul className="space-y-2">
+                                  {clinicalBrief.positiveFindings.map((f: string, i: number) => (
+                                    <li key={i} className="text-xs text-amber-200/80 flex items-start gap-2">
+                                      <CheckCircle className="w-3 h-3 text-emerald-400 mt-0.5 flex-shrink-0" />{f}
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+
+                            {/* Vitals Overview */}
+                            {clinicalBrief.vitalsOverview && (
+                              <div className="p-5 rounded-2xl bg-black/40 border border-amber-900/30">
+                                <span className="text-[10px] font-bold text-amber-500 uppercase tracking-widest block mb-3">📊 Vitals Overview</span>
+                                <div className="space-y-1.5">
+                                  {Object.entries(clinicalBrief.vitalsOverview).map(([k, v]: [string, any]) => (
+                                    <div key={k} className="flex justify-between">
+                                      <span className="text-[11px] text-amber-200/50 capitalize">{k.replace(/([A-Z])/g, ' $1')}</span>
+                                      <span className="text-[11px] text-amber-100 font-semibold">{Array.isArray(v) ? v.join(', ') : String(v)}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Questions for Doctor */}
+                            {clinicalBrief.targetedQuestions?.length > 0 && (
+                              <div className="p-5 rounded-2xl bg-purple-900/10 border border-purple-500/20">
+                                <span className="text-[10px] font-bold text-purple-400 uppercase tracking-widest block mb-3">💬 Questions for Your Doctor</span>
+                                <ol className="space-y-2 list-decimal list-inside">
+                                  {clinicalBrief.targetedQuestions.map((q: string, i: number) => (
+                                    <li key={i} className="text-xs text-amber-200/80">{q}</li>
+                                  ))}
+                                </ol>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Lab Highlights */}
+                          {clinicalBrief.labHighlights?.length > 0 && (
+                            <div className="p-5 rounded-2xl bg-black/40 border border-amber-900/30">
+                              <span className="text-[10px] font-bold text-amber-500 uppercase tracking-widest block mb-3">🔬 Biometric Highlights</span>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                                {clinicalBrief.labHighlights.map((l: any, i: number) => (
+                                  <div key={i} className="p-3 rounded-xl bg-amber-900/10 border border-amber-800/30">
+                                    <span className="text-[10px] font-bold text-amber-400 block">{l.marker}</span>
+                                    <span className="text-sm font-bold text-amber-100 block mt-1">{l.current}</span>
+                                    <span className={`text-[10px] font-sans ${l.trend?.includes('Improv') ? 'text-emerald-400' : l.trend?.includes('Elevat') ? 'text-red-400' : 'text-amber-400'}`}>{l.trend}</span>
+                                  </div>
                                 ))}
-                              </ul>
+                              </div>
                             </div>
+                          )}
+
+                          {/* Lifestyle Notes & Recommended Tests */}
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {clinicalBrief.lifestyleNotes && (
+                              <div className="p-5 rounded-2xl bg-cyan-900/10 border border-cyan-500/20">
+                                <span className="text-[10px] font-bold text-cyan-400 uppercase tracking-widest block mb-2">🌿 Lifestyle Recommendations</span>
+                                <p className="text-xs text-amber-200/80 leading-relaxed">{clinicalBrief.lifestyleNotes}</p>
+                              </div>
+                            )}
+                            {clinicalBrief.recommendedTests?.length > 0 && (
+                              <div className="p-5 rounded-2xl bg-violet-900/10 border border-violet-500/20">
+                                <span className="text-[10px] font-bold text-violet-400 uppercase tracking-widest block mb-2">🧪 Recommended Tests</span>
+                                <ul className="space-y-1">
+                                  {clinicalBrief.recommendedTests.map((t: string, i: number) => (
+                                    <li key={i} className="text-xs text-amber-200/80 flex items-center gap-2"><FileText className="w-3 h-3 text-violet-400" />{t}</li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Refresh button */}
+                          <div className="flex justify-end">
+                            <button
+                              onClick={() => handleGenerateSummary({ _id: user.id, name: user.name, email: user.email, age: user.age, bloodGroup: 'O+', latestReport: healthReports[0] || null })}
+                              className="text-xs text-amber-400/60 hover:text-amber-300 font-sans flex items-center gap-1.5 transition-colors"
+                            >
+                              <RefreshCw className="w-3 h-3" /> Regenerate Brief
+                            </button>
                           </div>
                         </div>
                       )}

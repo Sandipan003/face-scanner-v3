@@ -53,6 +53,9 @@ export class CameraService {
       this.stream.getTracks().forEach(track => track.stop());
       this.stream = null;
     }
+    if (this.video) {
+      this.video.srcObject = null;
+    }
   }
 
   public startFrameExtraction(onFrame: (blob: Blob) => void, fps: number = 30) {

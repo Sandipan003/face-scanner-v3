@@ -660,58 +660,110 @@ app.post("/api/scanner-wellness", authMiddleware, upload.single("video"), async 
 
 app.post("/api/scan/complete", authMiddleware, async (req: AuthRequest, res) => {
   try {
-    const { image, vitals } = req.body;
-    if (!image) {
-      return res.status(400).json({ success: false, error: "No image provided" });
+    const { vitals } = req.body;
+
+    const lastPulse = vitals?.pulseRate?.[vitals.pulseRate.length - 1];
+    const lastHrv = vitals?.hrv?.[vitals.hrv.length - 1];
+    const bp = vitals?.bloodPressure;
+    const avgPulse = vitals?.pulseRate?.length
+      ? Math.round(vitals.pulseRate.reduce((s: number, x: any) => s + (x.value || x), 0) / vitals.pulseRate.length)
+      : null;
+
+    const prompt = `You are a medical wellness AI. Analyze the biometric data below and respond with ONLY a flat JSON object — no nested objects, no wrapper keys, no markdown, no explanation.
+
+BIOMETRIC DATA:
+Heart Rate: ${lastPulse?.value || avgPulse || 75} bpm
+Blood Pressure: ${bp ? `${Math.round(bp.systolic)}/${Math.round(bp.diastolic)} mmHg` : '120/80 mmHg'}
+Breathing Rate: ${vitals?.rate?.[vitals?.rate?.length - 1]?.value || 16} rpm
+Signal Confidence: ${vitals?.signalConfidence || 60}%
+
+Respond with exactly this flat JSON structure (replace the example values with realistic ones based on the data):
+{"wrinkles":"Mild","skinTone":"Fitzpatrick Type III","pigmentation":"Clear","darkCircles":"None","hydration":"Well-hydrated","skinAge":27,"faceShape":"Oval","facialSymmetry":"High","faceFatPercentage":18.5,"bodyFatEstimation":20.0,"jawlineDefinition":"Sharp","neckFat":"Minimal","doubleChinDetection":"None","stressLevel":"Low","fatigueScore":25,"sleepQualityEstimation":"Good","energyScore":82,"recoveryScore":78,"moodDetection":"Calm","bloodPressureStatus":"Normal","cardiovascularRisk":"Low","overallWellnessScore":83,"healthSummary":"Vitals indicate a healthy cardiovascular profile with good energy and low stress markers."}`;
+
+    const groqApiKey = process.env.GROQ_API_KEY;
+    if (!groqApiKey) {
+      return res.status(500).json({ success: false, error: "Groq API key not configured. Please set GROQ_API_KEY in .env" });
     }
 
-    const ai = getGeminiClient();
-    if (!ai) {
-      return res.status(500).json({ success: false, error: "Gemini AI not configured" });
+    console.log("[Groq] Calling Groq API for health report...");
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 20000);
+
+    let groqResponse: Response;
+    try {
+      groqResponse = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${groqApiKey}`
+        },
+        body: JSON.stringify({
+          model: "llama-3.3-70b-versatile",
+          messages: [
+            { role: "system", content: "You are a medical wellness AI. Respond ONLY with a flat JSON object. Never wrap in nested keys. Never use markdown." },
+            { role: "user", content: prompt }
+          ],
+          response_format: { type: "json_object" },
+          temperature: 0.3,
+          max_tokens: 800
+        }),
+        signal: controller.signal
+      });
+    } finally {
+      clearTimeout(timeoutId);
     }
 
-    const base64Data = image.replace(/^data:image\/\w+;base64,/, "");
-    
-    // MOCK GEMINI RESPONSE TO PREVENT HANGS
-    const advancedMetrics = {
-      "wrinkles": "Moderate",
-      "skinTone": "Type III",
-      "pigmentation": "Clear",
-      "darkCircles": "Mild",
-      "hydration": "Well-hydrated",
-      "skinAge": 28,
-      "faceShape": "Oval",
-      "facialSymmetry": "High",
-      "faceFatPercentage": 18.5,
-      "bodyFatEstimation": 19.0,
-      "jawlineDefinition": "Sharp",
-      "neckFat": "Minimal",
-      "doubleChinDetection": "None",
-      "sleepQualityEstimation": "Good",
-      "energyScore": 85,
-      "recoveryScore": 90,
-      "moodDetection": "Calm"
-    };
+    if (!groqResponse!.ok) {
+      const errText = await groqResponse!.text();
+      console.error("[Groq] API error:", errText);
+      throw new Error(`Groq returned ${groqResponse!.status}: ${errText.slice(0, 200)}`);
+    }
+
+    const groqData = await groqResponse!.json();
+    const responseText = groqData.choices?.[0]?.message?.content || "{}";
+    console.log("[Groq] Raw response (first 300):", responseText.slice(0, 300));
+
+    let advancedMetrics: any;
+    try {
+      const parsed = JSON.parse(responseText);
+      // Unwrap if model wrapped everything in a nested key (e.g. { wellnessReport: {...} })
+      const keys = Object.keys(parsed);
+      if (keys.length === 1 && typeof parsed[keys[0]] === 'object') {
+        advancedMetrics = parsed[keys[0]];
+        console.log("[Groq] Unwrapped from key:", keys[0]);
+      } else {
+        advancedMetrics = parsed;
+      }
+    } catch (e) {
+      console.error("[Groq] Failed to parse JSON:", responseText);
+      throw new Error("Invalid JSON from Groq");
+    }
+
     // Save to DB
     if (req.user?.userId) {
-      const lastPulse = vitals?.pulseRate?.[vitals.pulseRate.length - 1];
-      const lastHrv = vitals?.hrv?.[vitals.hrv.length - 1];
-      
-      const newReport = new HealthReport({
-        userId: req.user.userId,
-        vitals: {
-          heartRate: lastPulse?.value,
-          hrv: lastHrv?.sdnn || lastHrv?.value,
-          ...advancedMetrics
-        }
-      });
-      await newReport.save();
+      try {
+        const newReport = new HealthReport({
+          userId: req.user.userId,
+          vitals: {
+            heartRate: lastPulse?.value || avgPulse,
+            hrv: lastHrv?.sdnn || lastHrv?.value,
+            bloodPressureSystolic: bp?.systolic,
+            bloodPressureDiastolic: bp?.diastolic,
+            ...advancedMetrics
+          }
+        });
+        await newReport.save();
+      } catch (dbErr) {
+        console.error("[DB] Failed to save report (non-fatal):", dbErr);
+      }
     }
 
+    console.log("[Groq] Report generation successful!");
     res.json({ success: true, report: advancedMetrics });
   } catch (error: any) {
-    console.error("Advanced Scan error:", error);
-    res.status(500).json({ success: false, error: "Failed to generate advanced scan report" });
+    console.error("[Groq] Advanced Scan error:", error.message);
+    res.status(500).json({ success: false, error: error.message || "Failed to generate report" });
   }
 });
 

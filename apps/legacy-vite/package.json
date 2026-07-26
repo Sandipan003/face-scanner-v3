@@ -28,6 +28,7 @@
     "mongoose": "^9.8.0",
     "motion": "^12.23.24",
     "multer": "^2.2.0",
+    "openai": "^6.49.0",
     "react": "^19.0.1",
     "react-dom": "^19.0.1",
     "recharts": "^3.10.0",
