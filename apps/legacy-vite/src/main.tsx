@@ -9,6 +9,13 @@ window.fetch = async (input, init) => {
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
   if (backendUrl && typeof input === 'string' && input.startsWith('/api')) {
     input = backendUrl + input;
+    
+    // Auto-inject Localtunnel bypass headers so API calls don't get blocked by the warning screen
+    init = init || {};
+    init.headers = {
+      ...init.headers,
+      'Bypass-Tunnel-Reminder': 'true'
+    };
   }
   return originalFetch(input, init);
 };
