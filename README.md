@@ -14,6 +14,12 @@ Welcome, witch or wizard, to **Lumos Health: Identity & Vitality Division**. Ben
 
 ---
 
+### 📱 Get the Android App
+Want to cast spells on the go? Download our official Android application directly from the repository! 
+**[Download Lumos.apk](./Lumos.apk)**
+
+---
+
 ## 🏰 Magical Departments (Features)
 
 *   **The Great Hall (Dashboard):** Step into the Great Hall to view an overview of your magical essence, recent biometric scans, and historical health prophecies.
