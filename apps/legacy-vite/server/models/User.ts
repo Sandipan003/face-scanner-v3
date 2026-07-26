@@ -31,8 +31,29 @@ const userSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    enum: ['patient', 'doctor'],
+    enum: ['patient', 'doctor', 'client'],
     default: 'patient',
+  },
+  points: {
+    type: Number,
+    default: 0,
+  },
+  walletHistory: [
+    {
+      amount: Number,
+      reason: String,
+      date: { type: Date, default: Date.now },
+    }
+  ],
+  businessDetails: {
+    name: String,
+    address: String
+  },
+  deliveryAddress: {
+    street: String,
+    city: String,
+    zip: String,
+    country: String
   }
 }, { timestamps: true });
 

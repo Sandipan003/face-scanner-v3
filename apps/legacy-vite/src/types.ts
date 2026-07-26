@@ -4,7 +4,7 @@ export interface User {
   email: string;
   age: number;
   avatar: string;
-  role: 'patient' | 'doctor';
+  role: 'patient' | 'doctor' | 'client';
   points?: number;
 }
 

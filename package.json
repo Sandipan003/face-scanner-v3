@@ -1,5 +1,5 @@
 {
-  "name": "face-scanner-monorepo",
+  "name": "lumos-health-monorepo",
   "version": "1.0.0",
   "private": true,
   "workspaces": [

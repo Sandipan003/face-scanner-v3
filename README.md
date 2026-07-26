@@ -2,7 +2,7 @@
   <img width="800" src="https://images.unsplash.com/photo-1618944847023-38aa001235f0?q=80&w=2069&auto=format&fit=crop" alt="Magical Atmosphere" style="border-radius: 20px; box-shadow: 0 0 20px rgba(245, 158, 11, 0.3);" />
 </div>
 
-<h1 align="center">⚡ Ministry of Magic: Identity & Vitality Division ⚡</h1>
+<h1 align="center">⚡ Lumos Health: Identity & Vitality Division ⚡</h1>
 
 <div align="center">
   <i>"It is our choices, Harry, that show what we truly are, far more than our abilities." — Albus Dumbledore</i>
@@ -10,7 +10,7 @@
 
 <br />
 
-Welcome, witch or wizard, to the **Ministry of Magic: Identity & Vitality Division**. Beneath its enchanted veneer lies a production-grade personal health and identity hub. We harness the power of the **Presage SmartSpectra Node SDK** (ancient magic) for contactless vital sign divination, and **Groq & Google Gemini** (powerful Oracles) for intelligent medical parsing and consultations. 
+Welcome, witch or wizard, to **Lumos Health: Identity & Vitality Division**. Beneath its enchanted veneer lies a production-grade personal health and identity hub. We harness the power of the **Presage SmartSpectra Node SDK** (ancient magic) for contactless vital sign divination, and **Groq & Google Gemini** (powerful Oracles) for intelligent medical parsing and consultations.
 
 ---
 

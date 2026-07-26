@@ -4,15 +4,19 @@ import {
   Activity, Shield, Camera, HeartPulse, ChevronRight, TrendingUp, 
   User as UserIcon, LogOut, ArrowRight, UserCheck, Stethoscope, 
   Sparkles, History, Heart, Clipboard, RefreshCw, Calendar, 
-  AlertTriangle, CheckCircle, FileText, MessageSquareText, Wand2, BookOpen
+  AlertTriangle, CheckCircle, FileText, MessageSquareText, Wand2, BookOpen, Download
 } from 'lucide-react';
 
 import { Navbar } from './components/Navbar';
 import { AuthModal } from './components/AuthModal';
+import { ProfileModal } from './components/ProfileModal';
 import { ContactlessScanner } from './components/ContactlessScanner';
 import { ScannerFlow } from './components/ScannerFlow';
 import { MedicalReportAnalyzer } from './components/MedicalReportAnalyzer';
 import { AiHealthChat } from './components/AiHealthChat';
+import { ClientDashboard } from './components/ClientDashboard';
+import { Apothecary } from './components/Apothecary';
+import { HealthAnalytics } from './components/HealthAnalytics';
 import { Sidebar, TabType } from './components/Sidebar';
 import { HealthBg3d } from './components/HealthBg3d';
 import { ProphecyOrb3d } from './components/ProphecyOrb3d';
@@ -34,6 +38,7 @@ export default function App() {
   const [user, setUser] = useState<User | null>(null);
   const [healthReports, setHealthReports] = useState<HealthReport[]>([]);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState<boolean>(false);
   const [authRole, setAuthRole] = useState<'patient' | 'doctor'>('patient');
   
   // Navigation State
@@ -297,30 +302,42 @@ Respond with exactly this JSON structure (fill in realistic values):
                   </div>
                 </motion.div>
 
-                {/* Healer Entry Card */}
+                {/* Vendor / Client Entry Card */}
                 <motion.div
                   whileHover={{ y: -8, scale: 1.02 }}
-                  className="p-8 rounded-[2rem] glass-panel-magical flex flex-col justify-between space-y-8 cursor-pointer hover:border-emerald-500/50 transition-all group"
+                  className="p-8 rounded-[2rem] glass-panel-magical flex flex-col justify-between space-y-8 cursor-pointer hover:border-orange-500/50 transition-all group"
                   onClick={() => {
-                    setAuthRole('doctor');
+                    setAuthRole('client');
                     setIsAuthModalOpen(true);
                   }}
                 >
                   <div className="space-y-4">
-                    <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <div className="w-14 h-14 rounded-2xl bg-orange-500/10 border border-orange-500/30 text-orange-400 flex items-center justify-center group-hover:scale-110 transition-transform">
                       <BookOpen className="w-7 h-7" />
                     </div>
-                    <h3 className="text-2xl font-bold text-amber-100 group-hover:text-emerald-400 transition-colors font-serif">Healer's Ward</h3>
+                    <h3 className="text-2xl font-bold text-amber-100 group-hover:text-orange-400 transition-colors font-serif">Apothecary Vendor</h3>
                     <p className="text-sm text-amber-200/70 leading-relaxed font-sans">
-                      Access St Mungo's clinical workspace, review patient rosters, track magical fluctuations, and compile divination briefs.
+                      Establish your business, add magical remedies to the marketplace, and track potion sales.
                     </p>
                   </div>
-                  <div className="flex items-center gap-2 text-emerald-400 font-bold text-sm font-sans tracking-widest uppercase">
-                    <span>Enter Healer's Ward</span>
+                  <div className="flex items-center gap-2 text-orange-400 font-bold text-sm font-sans tracking-widest uppercase">
+                    <span>Enter Vendor Portal</span>
                     <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                   </div>
                 </motion.div>
               </div>
+
+              {/* Download APK Button */}
+              <motion.a
+                href="/app-debug.apk"
+                download="LumosHealth-App.apk"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="flex items-center gap-4 px-10 py-5 bg-gradient-to-r from-amber-600 to-red-800 hover:from-amber-500 hover:to-red-700 text-amber-100 rounded-full font-bold shadow-[0_0_30px_rgba(217,119,6,0.3)] hover:shadow-[0_0_40px_rgba(217,119,6,0.5)] transition-all font-serif text-xl border border-amber-500/30"
+              >
+                <Download className="w-6 h-6 animate-bounce" />
+                <span>Download Android APK (Marauder's Edition)</span>
+              </motion.a>
 
               {/* Bottom Magic compliance block */}
               <div className="flex items-center gap-3 p-4 px-6 rounded-full glass-panel-magical">
@@ -335,20 +352,32 @@ Respond with exactly this JSON structure (fill in realistic values):
         /* Logged-In Layout with Sidebar */
         <div className="flex-1 flex flex-col lg:flex-row min-h-screen">
           {/* Sidebar Component */}
-          <Sidebar 
-            activeTab={activeTab}
-            onSelectTab={setActiveTab}
-            user={user}
-            onLogout={handleLogout}
-            isOpenMobile={isOpenMobile}
-            onToggleMobile={() => setIsOpenMobile(!isOpenMobile)}
-          />
+          {user.role !== 'client' && (
+            <Sidebar 
+              activeTab={activeTab}
+              onSelectTab={setActiveTab}
+              user={user}
+              onLogout={handleLogout}
+              isOpenMobile={isOpenMobile}
+              onToggleMobile={() => setIsOpenMobile(!isOpenMobile)}
+              onOpenProfile={() => setIsProfileModalOpen(true)}
+            />
+          )}
 
           {/* Main Module Content Area */}
           <main className="flex-1 p-4 sm:p-8 lg:p-10 max-w-7xl w-full mx-auto z-10 overflow-y-auto">
             <AnimatePresence mode="wait">
-              {/* Doctor Role View */}
-              {user.role === 'doctor' ? (
+              {/* Client Role View */}
+              {user.role === 'client' ? (
+                <motion.div
+                  key="client-view"
+                  initial={{ opacity: 0, y: 15 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -15 }}
+                >
+                  <ClientDashboard user={user} onLogout={handleLogout} />
+                </motion.div>
+              ) : user.role === 'doctor' ? (
                 <motion.div
                   key="doctor-view"
                   initial={{ opacity: 0, y: 15 }}
@@ -587,17 +616,29 @@ Respond with exactly this JSON structure (fill in realistic values):
                   {activeTab === 'scanner' && (
                     <ScannerFlow 
                       token={localStorage.getItem('token') || ''}
-                      onComplete={() => {
+                      onComplete={async () => {
                         const token = localStorage.getItem('token');
                         if (token) fetchHealthReports(token);
                         
-                        // Award 50 House Points for completing a scan
-                        setUser(prev => {
-                          if (!prev) return prev;
-                          const newPoints = (prev.points || 0) + 50;
-                          localStorage.setItem('user_points', newPoints.toString());
-                          return { ...prev, points: newPoints };
-                        });
+                        // Securely award 50 House Points
+                        if (token) {
+                          try {
+                            const res = await fetch('/api/user/award-points', {
+                              method: 'POST',
+                              headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${token}`
+                              },
+                              body: JSON.stringify({ amount: 50, reason: "Completed Prophecy Scan" })
+                            });
+                            const data = await res.json();
+                            if (data.success) {
+                              setUser(prev => prev ? { ...prev, points: data.points } : prev);
+                            }
+                          } catch (err) {
+                            console.error("Failed to award points", err);
+                          }
+                        }
                       }} 
                     />
                   )}
@@ -786,6 +827,19 @@ Respond with exactly this JSON structure (fill in realistic values):
                     </div>
                   )}
 
+                  {/* TAB 6: Apothecary */}
+                  {activeTab === 'apothecary' && (
+                    <Apothecary 
+                      user={user} 
+                      onUpdatePoints={(points) => setUser(prev => prev ? { ...prev, points } : prev)} 
+                    />
+                  )}
+
+                  {/* TAB 7: Health Analytics */}
+                  {activeTab === 'analytics' && (
+                    <HealthAnalytics healthReports={healthReports} />
+                  )}
+
                 </motion.div>
               )}
             </AnimatePresence>
@@ -799,6 +853,15 @@ Respond with exactly this JSON structure (fill in realistic values):
         onAuthenticate={handleAuthenticate}
         role={authRole}
       />
+
+      {user && (
+        <ProfileModal
+          isOpen={isProfileModalOpen}
+          onClose={() => setIsProfileModalOpen(false)}
+          user={user}
+          onUpdate={(updatedUser) => setUser(updatedUser)}
+        />
+      )}
     </div>
   );
 }

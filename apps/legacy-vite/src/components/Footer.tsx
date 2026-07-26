@@ -41,14 +41,14 @@ export const Footer: React.FC = () => {
             <span>Important Medical Information Disclaimer</span>
           </div>
           <p className="text-[11px] text-neutral-400">
-            This Face Scanner application provides informational health metrics based on optical rPPG estimations. It does not provide clinical diagnoses, medical advice, or prescriptions. Always consult a qualified physician or healthcare provider for professional medical diagnosis and treatment decisions.
+            This LumosHealth application provides informational health metrics based on optical rPPG estimations. It does not provide clinical diagnoses, medical advice, or prescriptions. Always consult a qualified physician or healthcare provider for professional medical diagnosis and treatment decisions.
           </p>
         </div>
 
         {/* Footer Bottom */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-white/10 text-[11px] text-neutral-500">
           <div className="flex items-center gap-2">
-            <span>© 2026 Face Scanner. All rights reserved.</span>
+            <span>© 2026 LumosHealth. All rights reserved.</span>
             <span>•</span>
             <span className="flex items-center gap-1 text-neutral-400">
               <Lock className="w-3 h-3 text-emerald-400" /> Encrypted & Privacy-First

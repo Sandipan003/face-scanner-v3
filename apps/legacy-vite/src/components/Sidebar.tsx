@@ -1,11 +1,12 @@
 import React from 'react';
 import { 
   Sparkles, Camera, BookOpen, MessageSquareText, Stethoscope, 
-  LayoutDashboard, LogOut, ChevronRight, Menu, X, ShieldCheck, Wand2, Eye
+  LayoutDashboard, LogOut, ChevronRight, Menu, X, ShieldCheck, Wand2, Eye,
+  Package, TrendingUp
 } from 'lucide-react';
 import { User } from '../types';
 
-export type TabType = 'dashboard' | 'scanner' | 'analyzer' | 'chat' | 'brief';
+export type TabType = 'dashboard' | 'scanner' | 'analyzer' | 'chat' | 'brief' | 'apothecary' | 'analytics';
 
 interface SidebarProps {
   activeTab: TabType;
@@ -14,6 +15,7 @@ interface SidebarProps {
   onLogout: () => void;
   isOpenMobile: boolean;
   onToggleMobile: () => void;
+  onOpenProfile: () => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -22,7 +24,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   user,
   onLogout,
   isOpenMobile,
-  onToggleMobile
+  onToggleMobile,
+  onOpenProfile
 }) => {
   const menuItems = [
     {
@@ -57,8 +60,22 @@ export const Sidebar: React.FC<SidebarProps> = ({
       id: 'brief' as TabType,
       label: 'Healer\'s Prep',
       icon: Stethoscope,
-      badge: 'Records',
-      badgeColor: 'bg-amber-700/20 text-amber-300 border-amber-600/30'
+      badge: 'Brief',
+      badgeColor: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20'
+    },
+    {
+      id: 'apothecary' as TabType,
+      label: 'Apothecary',
+      icon: Package,
+      badge: 'Shop',
+      badgeColor: 'bg-orange-500/10 text-orange-400 border-orange-500/20'
+    },
+    {
+      id: 'analytics' as TabType,
+      label: 'Crystal Ball',
+      icon: TrendingUp,
+      badge: 'Stats',
+      badgeColor: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20'
     }
   ];
 
@@ -146,15 +163,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {/* User Info & Footer */}
         <div className="pt-6 border-t border-amber-900/30 space-y-4">
           <div className="p-3.5 rounded-2xl bg-black/40 border border-amber-900/40 flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3 overflow-hidden">
+            <button 
+              onClick={onOpenProfile}
+              className="flex items-center gap-3 overflow-hidden hover:bg-amber-900/20 p-2 rounded-xl transition-colors text-left flex-1"
+            >
               <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-amber-600 to-amber-400 flex items-center justify-center font-bold text-black text-sm shrink-0 font-serif">
-                {user.name.charAt(0).toUpperCase()}
+                {user.name?.charAt(0).toUpperCase()}
               </div>
               <div className="flex flex-col truncate">
                 <span className="text-xs font-bold text-amber-100 truncate font-serif">{user.name}</span>
                 <span className="text-[10px] text-amber-400 font-bold font-sans truncate">{user.points || 0} House Points</span>
               </div>
-            </div>
+            </button>
 
             <button
               onClick={onLogout}

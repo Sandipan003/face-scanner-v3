@@ -13,6 +13,8 @@ import { User } from "./server/models/User";
 import { HealthReport } from "./server/models/HealthReport";
 import { Scan } from "./server/models/Scan";
 import { Session } from "./server/models/Session";
+import { Product } from "./server/models/Product";
+import { Order } from "./server/models/Order";
 import { authMiddleware, AuthRequest } from "./server/middleware/auth";
 import multer from "multer";
 import fs from "fs";
@@ -80,7 +82,7 @@ app.post("/api/auth/register", async (req, res) => {
     const secret = process.env.JWT_SECRET || process.env.NEXTAUTH_SECRET || "fallback_secret";
     const token = jwt.sign({ userId: user._id }, secret, { expiresIn: '7d' });
     
-    res.json({ success: true, token, user: { id: user._id, email, name, bloodGroup, age, role: user.role } });
+    res.json({ success: true, token, user: { id: user._id, email, name, bloodGroup, age, role: user.role, points: user.points, phone: user.phone } });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
@@ -108,9 +110,57 @@ app.post("/api/auth/login", async (req, res) => {
         name: user.name, 
         bloodGroup: user.bloodGroup, 
         age: user.age,
-        role: user.role || "patient"
+        role: user.role || "patient",
+        points: user.points,
+        phone: user.phone
       } 
     });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Update Profile
+app.put("/api/user/profile", authMiddleware, async (req: AuthRequest, res) => {
+  try {
+    const { name, age, bloodGroup, phone } = req.body;
+    const user = await User.findByIdAndUpdate(
+      req.user?.userId,
+      { $set: { name, age, bloodGroup, phone } },
+      { new: true }
+    );
+    if (!user) return res.status(404).json({ error: "User not found" });
+    res.json({ success: true, user: { id: user._id, email: user.email, name: user.name, bloodGroup: user.bloodGroup, age: user.age, role: user.role, points: user.points, phone: user.phone } });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get Wallet
+app.get("/api/user/wallet", authMiddleware, async (req: AuthRequest, res) => {
+  try {
+    const user = await User.findById(req.user?.userId);
+    if (!user) return res.status(404).json({ error: "User not found" });
+    res.json({ success: true, points: user.points, history: user.walletHistory || [] });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Award Points
+app.post("/api/user/award-points", authMiddleware, async (req: AuthRequest, res) => {
+  try {
+    const { amount, reason } = req.body;
+    if (!amount || typeof amount !== 'number') return res.status(400).json({ error: "Invalid amount" });
+    
+    const user = await User.findById(req.user?.userId);
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    user.points += amount;
+    user.walletHistory.push({ amount, reason, date: new Date() });
+    await user.save();
+
+    res.json({ success: true, points: user.points, history: user.walletHistory });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
@@ -171,6 +221,191 @@ app.get("/api/doctor/patients/:id/reports", authMiddleware, async (req: AuthRequ
   }
 });
 
+// --- E-COMMERCE ENDPOINTS ---
+
+// Add a Product (Client Only)
+app.post("/api/products", authMiddleware, async (req: AuthRequest, res) => {
+  try {
+    const user = await User.findById(req.user?.userId);
+    if (!user || user.role !== 'client') {
+      return res.status(403).json({ error: "Access denied. Clients only." });
+    }
+    const { name, description, price, imageBase64, targetHealthConditions } = req.body;
+    
+    const product = new Product({
+      clientId: user._id,
+      name,
+      description,
+      price,
+      imageBase64,
+      targetHealthConditions
+    });
+    await product.save();
+    res.json({ success: true, product });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get Products (Client gets theirs, Patients get all or by condition)
+app.get("/api/products", authMiddleware, async (req: AuthRequest, res) => {
+  try {
+    const user = await User.findById(req.user?.userId);
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    if (user.role === 'client') {
+      const products = await Product.find({ clientId: user._id }).sort({ createdAt: -1 });
+      return res.json({ success: true, products });
+    } else {
+      const products = await Product.find().sort({ createdAt: -1 });
+      return res.json({ success: true, products });
+    }
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get Product Recommendations via AI
+app.get("/api/recommendations", authMiddleware, async (req: AuthRequest, res) => {
+  try {
+    const latestReport = await HealthReport.findOne({ userId: req.user?.userId }).sort({ date: -1 });
+    const allProducts = await Product.find({});
+    
+    // Fallback if no report or AI error
+    const fallbackProducts = allProducts.slice(0, 5);
+    
+    if (!latestReport || !latestReport.vitals || allProducts.length === 0) {
+      return res.json({ success: true, products: fallbackProducts, targetedConditions: [] });
+    }
+
+    const ai = getGeminiClient();
+    if (!ai) {
+      return res.json({ success: true, products: fallbackProducts, targetedConditions: [] });
+    }
+
+    // Build the AI Prompt
+    const systemPrompt = `You are a medical apothecary AI assistant.
+You have the user's latest health vitals and a list of available magical remedies/products.
+Your job is to read the product descriptions and the user's vitals, and determine which products are most suitable for the user's specific health needs.
+Return a maximum of 5 highly recommended products.
+
+USER VITALS:
+${JSON.stringify(latestReport.vitals, null, 2)}
+
+AVAILABLE PRODUCTS:
+${allProducts.map(p => `ID: ${p._id}\nName: ${p.name}\nDescription: ${p.description}`).join('\n\n')}
+
+Output a JSON array of recommended products matching this schema exactly:
+[
+  {
+    "productId": "string (the exact ID of the product)",
+    "reason": "string (A short, 1-2 sentence explanation of why this product is suitable based on their vitals and the product description)"
+  }
+]
+Return valid raw JSON array only.`;
+
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: [{ text: systemPrompt }],
+      config: {
+        responseMimeType: "application/json",
+      },
+    });
+
+    const responseText = response.text || "[]";
+    let recommendations = [];
+    try {
+      recommendations = JSON.parse(responseText);
+    } catch (e) {
+      console.error("AI Recommendation parsing failed", e);
+      return res.json({ success: true, products: fallbackProducts, targetedConditions: [] });
+    }
+
+    // Map AI recommendations back to populated products
+    const recommendedProducts = [];
+    const targetedConditions: string[] = [];
+
+    for (const rec of recommendations) {
+      const product = allProducts.find(p => p._id.toString() === rec.productId);
+      if (product) {
+        // We inject the AI reason into the product object so the frontend can display it
+        const prodObj = product.toObject();
+        prodObj.aiReason = rec.reason;
+        recommendedProducts.push(prodObj);
+        
+        if (product.targetHealthConditions && product.targetHealthConditions.length > 0) {
+          if (!targetedConditions.includes(product.targetHealthConditions[0])) {
+            targetedConditions.push(product.targetHealthConditions[0]);
+          }
+        }
+      }
+    }
+
+    // If AI failed to match any, use fallback
+    if (recommendedProducts.length === 0) {
+      return res.json({ success: true, products: fallbackProducts, targetedConditions: [] });
+    }
+
+    res.json({ success: true, products: recommendedProducts, targetedConditions });
+  } catch (error: any) {
+    console.error("Recommendations error:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Checkout / Buy Product
+app.post("/api/checkout", authMiddleware, async (req: AuthRequest, res) => {
+  try {
+    const { productId, useWallet, deliveryAddress } = req.body;
+    const user = await User.findById(req.user?.userId);
+    const product = await Product.findById(productId);
+
+    if (!user || !product) {
+      return res.status(404).json({ error: "User or Product not found" });
+    }
+
+    let discountApplied = 0;
+    if (useWallet && user.points > 0) {
+      // Points value logic: e.g., 1 point = $0.10. Let's assume 1 point = $1 for simplicity.
+      // Max discount is 90% of product price
+      const maxDiscount = product.price * 0.90;
+      const pointsDiscount = user.points;
+      
+      discountApplied = Math.min(maxDiscount, pointsDiscount);
+      user.points -= discountApplied;
+      user.walletHistory.push({
+        amount: -discountApplied,
+        reason: `Purchased ${product.name}`,
+        date: new Date()
+      });
+      await user.save();
+    }
+
+    // Update user's default delivery address if provided
+    if (deliveryAddress) {
+      user.deliveryAddress = deliveryAddress;
+      await user.save();
+    }
+
+    const finalPrice = product.price - discountApplied;
+
+    const order = new Order({
+      userId: user._id,
+      productId: product._id,
+      originalPrice: product.price,
+      discountApplied,
+      finalPrice,
+      deliveryAddress: deliveryAddress || user.deliveryAddress
+    });
+
+    await order.save();
+
+    res.json({ success: true, order, pointsRemaining: user.points });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // 2. Medical Report Analysis (OCR + Entity Extraction + Plain Language Explanation)
 app.post("/api/analyze-report", async (req, res) => {
   try {
@@ -201,11 +436,11 @@ app.post("/api/analyze-report", async (req, res) => {
           "How does this compare with my historical baseline from last year?"
         ],
         confidenceScore: 0.96,
-        disclaimer: "GuardianOS AI provides informational analysis grounded in uploaded records. This is not a formal medical diagnosis. Always consult a licensed healthcare professional."
+        disclaimer: "LumosHealth AI provides informational analysis grounded in uploaded records. This is not a formal medical diagnosis. Always consult a licensed healthcare professional."
       });
     }
 
-    const systemPrompt = `You are GuardianOS AI, an expert medical document intelligence assistant.
+    const systemPrompt = `You are LumosHealth AI, an expert medical document intelligence assistant.
 Analyze the provided medical report document/image/text carefully.
 Output a JSON response matching the following schema:
 {
@@ -280,7 +515,7 @@ app.post("/api/health-chat", async (req, res) => {
       });
     }
 
-    const systemInstruction = `You are GuardianOS AI, an empathetic, highly intelligent medical information assistant.
+    const systemInstruction = `You are LumosHealth AI, an empathetic, highly intelligent medical information assistant.
 You have access to the patient's verified health records context provided below:
 --- HEALTH RECORDS CONTEXT ---
 ${JSON.stringify(healthContext || {}, null, 2)}
@@ -573,15 +808,15 @@ app.post("/api/scanner-wellness", authMiddleware, upload.single("video"), async 
       return res.status(400).json({ success: false, error: "Uploaded video file is empty." });
     }
 
-    console.log(`[GuardianOS Scanner] Processing ${uploadStats.size} byte video from ${videoPath}`);
+    console.log(`[LumosHealth Scanner] Processing ${uploadStats.size} byte video from ${videoPath}`);
 
     // Get video metadata
     const { durationSecs, fps, width, height } = await getVideoMetadata(videoPath);
-    console.log(`[GuardianOS Scanner] Video: ${durationSecs.toFixed(1)}s @ ${fps}fps, ${width}x${height}`);
+    console.log(`[LumosHealth Scanner] Video: ${durationSecs.toFixed(1)}s @ ${fps}fps, ${width}x${height}`);
 
     // Run rPPG heart rate estimation using FFmpeg frame analysis
     const { bpm, confidence } = await estimateHeartRateFromVideo(videoPath);
-    console.log(`[GuardianOS Scanner] Detected BPM: ${bpm} (confidence: ${(confidence * 100).toFixed(0)}%)`);
+    console.log(`[LumosHealth Scanner] Detected BPM: ${bpm} (confidence: ${(confidence * 100).toFixed(0)}%)`);
 
     // Generate all correlated wellness metrics
     const metrics = generateWellnessMetrics(bpm, durationSecs);
@@ -641,13 +876,13 @@ app.post("/api/scanner-wellness", authMiddleware, upload.single("video"), async 
           insights: scanData.insights
         });
         await newReport.save();
-        console.log(`[GuardianOS Scanner] Report saved to MongoDB for user ${req.user.userId}`);
+        console.log(`[LumosHealth Scanner] Report saved to MongoDB for user ${req.user.userId}`);
       } catch (dbErr) {
         console.warn("Failed to save report to DB:", dbErr);
       }
     }
 
-    console.log(`[GuardianOS Scanner] Scan complete — BPM:${bpm} Condition:${metrics.conditionStatus} Score:${metrics.overallWellnessIndex}`);
+    console.log(`[LumosHealth Scanner] Scan complete — BPM:${bpm} Condition:${metrics.conditionStatus} Score:${metrics.overallWellnessIndex}`);
     return res.json({ success: true, ...scanData });
 
   } catch (error: any) {
@@ -787,7 +1022,7 @@ async function startServer() {
 
   server.listen(PORT, "0.0.0.0", async () => {
     await connectDB();
-    console.log(`GuardianOS AI Server & WebSocket running on http://localhost:${PORT}`);
+    console.log(`LumosHealth AI Server & WebSocket running on http://localhost:${PORT}`);
   });
 }
 

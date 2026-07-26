@@ -7,7 +7,7 @@ interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
   onAuthenticate: (user: User) => void;
-  role: 'patient' | 'doctor';
+  role: 'patient' | 'doctor' | 'client';
 }
 
 export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthenticate, role }) => {
@@ -57,6 +57,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthent
         role: data.user.role,
         avatar: role === 'doctor' 
           ? 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&w=200&q=80'
+          : role === 'client'
+          ? 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?auto=format&fit=crop&w=200&q=80'
           : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
       });
       onClose();
@@ -71,18 +73,26 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthent
 
   const activeColorClass = role === 'doctor' 
     ? 'from-teal-600 to-cyan-600 hover:from-teal-500 hover:to-cyan-500 shadow-teal-500/25'
+    : role === 'client'
+    ? 'from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 shadow-amber-500/25'
     : 'from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 shadow-indigo-500/25';
 
   const iconBgClass = role === 'doctor'
     ? 'bg-teal-500/10 border-teal-500/20 text-teal-400'
+    : role === 'client'
+    ? 'bg-amber-500/10 border-amber-500/20 text-amber-400'
     : 'bg-indigo-500/10 border-indigo-500/20 text-indigo-400';
 
   const focusBorderClass = role === 'doctor'
     ? 'focus:border-teal-500'
+    : role === 'client'
+    ? 'focus:border-amber-500'
     : 'focus:border-indigo-500';
 
   const textHighlightClass = role === 'doctor'
     ? 'text-teal-400'
+    : role === 'client'
+    ? 'text-amber-400'
     : 'text-indigo-400';
 
   return (

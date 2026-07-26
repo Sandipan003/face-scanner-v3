@@ -17,7 +17,7 @@ export const Navbar: React.FC<NavbarProps> = ({ user, onLoginClick, onLogout }) 
           <div className="p-2 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400">
             <Activity className="w-5 h-5" />
           </div>
-          <span className="text-lg font-bold text-white tracking-tight">GuardianOS</span>
+          <span className="text-lg font-bold text-white tracking-tight">LumosHealth</span>
         </div>
 
         <div>
