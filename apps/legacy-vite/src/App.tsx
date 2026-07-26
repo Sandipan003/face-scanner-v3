@@ -180,6 +180,7 @@ Respond with exactly this JSON structure (fill in realistic values):
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
+      // First try to parse what we can from the token for an instant UI update
       try {
         const parts = token.split('.');
         if (parts.length === 3) {
@@ -194,17 +195,34 @@ Respond with exactly this JSON structure (fill in realistic values):
             points: Number(localStorage.getItem('user_points')) || 0
           };
           setUser(userObj);
-          
-          if (payload.role === 'doctor') {
+        }
+      } catch (e) {
+        console.error('Error decoding token locally:', e);
+      }
+
+      // Then reliably fetch the full, latest user data from the backend
+      fetch('/api/auth/me', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && data.user) {
+          setUser(data.user);
+          // Only fetch reports once we know the real user role
+          if (data.user.role === 'doctor') {
             fetchPatientsForDoctor(token);
           } else {
             fetchHealthReports(token);
           }
+        } else {
+          // Token might be invalid or user deleted
+          localStorage.removeItem('token');
+          setUser(null);
         }
-      } catch (e) {
-        console.error('Error decoding token:', e);
-        localStorage.removeItem('token');
-      }
+      })
+      .catch(err => {
+        console.error("Failed to verify user on load:", err);
+      });
     }
   }, []);
 

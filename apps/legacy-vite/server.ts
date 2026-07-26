@@ -120,6 +120,29 @@ app.post("/api/auth/login", async (req, res) => {
   }
 });
 
+app.get("/api/auth/me", authMiddleware, async (req: AuthRequest, res) => {
+  try {
+    const user = await User.findById(req.user?.userId).select('-password');
+    if (!user) return res.status(404).json({ error: "User not found" });
+    
+    res.json({
+      success: true,
+      user: {
+        id: user._id,
+        email: user.email,
+        name: user.name,
+        bloodGroup: user.bloodGroup,
+        age: user.age,
+        role: user.role || "patient",
+        points: user.points,
+        phone: user.phone
+      }
+    });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Update Profile
 app.put("/api/user/profile", authMiddleware, async (req: AuthRequest, res) => {
   try {
