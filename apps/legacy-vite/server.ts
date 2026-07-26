@@ -150,18 +150,27 @@ app.get("/api/user/wallet", authMiddleware, async (req: AuthRequest, res) => {
 // Award Points
 app.post("/api/user/award-points", authMiddleware, async (req: AuthRequest, res) => {
   try {
+    console.log("Award-points called with:", req.body, "User ID:", req.user?.userId);
     const { amount, reason } = req.body;
     if (!amount || typeof amount !== 'number') return res.status(400).json({ error: "Invalid amount" });
     
     const user = await User.findById(req.user?.userId);
-    if (!user) return res.status(404).json({ error: "User not found" });
+    if (!user) {
+      console.log("User not found in DB for ID:", req.user?.userId);
+      return res.status(404).json({ error: "User not found" });
+    }
 
-    user.points += amount;
+    user.points = (user.points || 0) + amount;
+    if (!user.walletHistory) {
+      user.walletHistory = [];
+    }
     user.walletHistory.push({ amount, reason, date: new Date() });
     await user.save();
 
+    console.log("Points successfully awarded! New points:", user.points);
     res.json({ success: true, points: user.points, history: user.walletHistory });
   } catch (error: any) {
+    console.error("Error in award-points:", error);
     res.status(500).json({ error: error.message });
   }
 });

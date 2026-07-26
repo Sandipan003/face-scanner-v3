@@ -617,12 +617,14 @@ Respond with exactly this JSON structure (fill in realistic values):
                     <ScannerFlow 
                       token={localStorage.getItem('token') || ''}
                       onComplete={async () => {
+                        console.log("ScannerFlow onComplete triggered!");
                         const token = localStorage.getItem('token');
                         if (token) fetchHealthReports(token);
                         
                         // Securely award 50 House Points
                         if (token) {
                           try {
+                            console.log("Sending request to /api/user/award-points");
                             const res = await fetch('/api/user/award-points', {
                               method: 'POST',
                               headers: {
@@ -632,6 +634,7 @@ Respond with exactly this JSON structure (fill in realistic values):
                               body: JSON.stringify({ amount: 50, reason: "Completed Prophecy Scan" })
                             });
                             const data = await res.json();
+                            console.log("Award points response:", data);
                             if (data.success) {
                               setUser(prev => prev ? { ...prev, points: data.points } : prev);
                             }
@@ -639,7 +642,7 @@ Respond with exactly this JSON structure (fill in realistic values):
                             console.error("Failed to award points", err);
                           }
                         }
-                      }} 
+                      }}
                     />
                   )}
 
