@@ -467,13 +467,20 @@ Return valid raw JSON only.`;
     }
     contents.push({ text: `Report File Name: ${fileName || "Medical_Report.pdf"}\nAdditional Text Content: ${textContent || "None provided"}\n\n${systemPrompt}` });
 
-    const response = await ai.models.generateContent({
-      model: "gemini-2.0-flash",
-      contents,
-      config: {
-        responseMimeType: "application/json",
-      },
-    });
+    console.log("Calling Gemini API...");
+    const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Gemini API Timeout")), 15000));
+    
+    const response: any = await Promise.race([
+      ai.models.generateContent({
+        model: "gemini-2.0-flash",
+        contents,
+        config: {
+          responseMimeType: "application/json",
+        },
+      }),
+      timeoutPromise
+    ]);
+    console.log("Gemini API call completed!");
 
     const responseText = response.text || "{}";
     try {

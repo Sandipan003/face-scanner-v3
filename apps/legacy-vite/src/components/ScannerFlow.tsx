@@ -276,6 +276,7 @@ Respond with exactly this flat JSON structure (fill in realistic values based on
       intentionalClose.current = true;
       if (ws.current) ws.current.close(1000, 'Scan Complete');
       cameraService.current.stop();
+      onComplete('scan_id_placeholder'); // Trigger App.tsx to award points
       setStatus('analyzing_report');
       generateAdvancedReport();
     }
