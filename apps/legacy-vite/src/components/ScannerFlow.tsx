@@ -63,8 +63,14 @@ export const ScannerFlow = ({ token, onComplete }: { token: string; onComplete: 
   };
 
   const connectWebSocket = () => {
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${protocol}//${window.location.host}/api/scan/stream?token=${token}`;
+    const backendUrl = import.meta.env.VITE_BACKEND_URL;
+    let wsUrl = '';
+    if (backendUrl) {
+      wsUrl = backendUrl.replace(/^http/, 'ws') + `/api/scan/stream?token=${token}`;
+    } else {
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      wsUrl = `${protocol}//${window.location.host}/api/scan/stream?token=${token}`;
+    }
     
     ws.current = new WebSocket(wsUrl);
     
