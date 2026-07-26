@@ -1,7 +1,3 @@
-<div align="center">
-  <img width="1200" height="475" alt="GHBanner" src="https://ai.google.dev/static/site-assets/images/share-ais-513315318.png" />
-</div>
-
 # Ministry of Magic: Identity Division (VitalScan)
 
 Welcome to the **Ministry of Magic: Identity Division**, a highly advanced, magical health and identity verification application. Beneath its magical veneer lies a production-grade personal health hub powered by the **Presage SmartSpectra Node SDK** for contactless vital sign analysis and **Google Gemini** for intelligent medical document parsing and consultation.
